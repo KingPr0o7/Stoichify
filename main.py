@@ -5,7 +5,7 @@ from prettytable import SINGLE_BORDER
 from prettytable import DOUBLE_BORDER
 
 # Used for clearing the console. (Replit uses Linux) 
-system = 'Linux'
+system = 'Windows'
 
 def clear_console(system):
 	if str(system).lower() == 'windows' or str(system).lower() == 'win':
@@ -62,90 +62,36 @@ def format_str(style, text):
 
 # --------------------------------------------------------------- #
 
-#type_checker = PrettyTable()
-#type_checker.set_style(DOUBLE_BORDER)
-#type_checker.title = f'{format_str("PASS_BOLD", "STOICHIFY")} - {format_str("WARNING_BOLD", "TYPE CHECKER")}'
-#type_checker.field_names = [format_str("BOLD", "SYNTHESIS"), format_str("BOLD", "DECOMPOSITION"), format_str("BOLD", "SINGLE REPLACEMENT"), format_str("BOLD", "DOUBLE REPLACEMENT"), format_str("BOLD", "COMBUSTION")]
-#type_checker.add_row([format_str("PASS", "A + B -> AB"), format_str("PASS", "AB -> A + B"), format_str("PASS", "A + BC -> AC + B"), format_str("PASS", "AB + CD -> AD + CB"), format_str("PASS", "A + O2 -> A2O3")])
+type_checker = PrettyTable()
+type_checker.set_style(DOUBLE_BORDER)
+type_checker.title = f'{format_str("PASS_BOLD", "STOICHIFY")} - {format_str("WARNING_BOLD", "TYPE CHECKER")}'
+type_checker.field_names = [format_str("BOLD", "COEFFICIENTS"), format_str("BOLD", "SUBSCRIPTS")]
+type_checker.add_row([format_str("PASS", "[1]Ni"), format_str("PASS", "[1]NiBr(4)")])
+type_checker.add_row([format_str("PASS", "[12]Ni"), format_str("PASS", "[1]H(2)O")])
+type_checker.add_row([format_str("FAIL", "Ni"), format_str("FAIL", "[1]NiBr4")])
+print(type_checker)
 
-#print(type_checker)
-
-chemical_equation = input('Enter balanced equation: ').replace(' ', '') # [2]H(2) + O(2) -> [2]H(2)O
-
+chemical_equation = input('Enter balanced equation: ').replace(' ', '') # [1]NiBr(4) + [4]K -> [1]Ni + [4]KBr
 split_chemical_equation = chemical_equation.split('->')
 reactants = split_chemical_equation[0].split('+')
 products = split_chemical_equation[1].split('+')
 
-def get_reactant_numbers(string):
-	reactants_coefficients = []
-	reactants_subscripts = []
+def get_coefficients(string):
+	reactants_coefficients = ''
 
-	for i in range(len(reactants)):
+	for i in range(len(string)):
 		if '[' == string[i]:
 			while string[i + 1] != ']':
-				reactants_coefficients.append(string[i + 1])
+				reactants_coefficients += string[i + 1]
 				i += 1
-		elif '(' == string[i]:
-			while string[i + 1] != ')':
-				reactants_subscripts.append(string[i + 1])
-				i += 1		
-
-	#for reactant in reactants:
-	#	reactant_coefficients = []
-	#	reactant_subscripts = []
-	#	for i in range(len(reactant)):
-	#		if '[' in reactant[i]:
-	#			while reactant[i + 1] != ']':
-	#				reactant_coefficients.append(reactant[i + 1])
-	#				i += 1
-	#		elif '(' in reactant[i]:
-	#			while reactant[i + 1] != ')':
-	#				reactant_subscripts.append(reactant[i + 1])
-	#				i += 1
-	#	reactants_coefficients.append(''.join(reactant_coefficients))
-	#	reactants_subscripts.append(''.join(reactant_subscripts))
 	return int(reactants_coefficients)
-
-def get_product_numbers(products):
-	products_coefficients = []
-	products_subscripts = []
-
-	for product in products:
-		product_coefficients = []
-		product_subscripts = []
-		for i in range(len(product)):
-			if '[' in product[i]:
-				while product[i + 1] != ']':
-					product_coefficients.append(product[i + 1])
-					i += 1
-			elif '(' in product[i]:
-				while product[i + 1] != ')':
-					product_subscripts.append(product[i + 1])
-					i += 1
-		products_coefficients.append(''.join(product_coefficients))
-		products_subscripts.append(''.join(product_subscripts))  
-	return products_coefficients
 
 chemical_equation_given = input('Enter given: ').split(' ') # 12.3 mol [2]H(2)
 chemical_equation_wanted = input('Enter wanted: ') # [2]H(2)O
 
 def calculate_product(given, wanted): # [2]H(2) + O(2) -> [2]H(2)O(2)
-	print(given[2])
-	print(get_reactant_numbers(given[2]))
-	#for reactant in reactants:
-	#	if given[2] == reactant:
-	#		given_type = get_reactant_numbers(reactants)
-	#	if wanted == reactant:
-	#		wanted_type = get_reactant_numbers(reactants)
-	#for product in products:
-	#	if given[2] == product:
-	#		given_type = get_product_numbers(products)
-	#	if wanted == product:
-	#		wanted_type = get_product_numbers(products)
-	#print(given_type, wanted_type)
-	#calculation = given[0] * (wanted_type / given_type)
-	#print(calculation)
-	#print(calculation)
+	calculation = float(given[0]) * (get_coefficients(wanted) / get_coefficients(given[2]))
+	calculation = f'{calculation} {given[1]} {wanted[3:5]}'
+	return calculation
 
-calculate_product(chemical_equation_given, chemical_equation_wanted)
-
+print(f'\nAnswer: {chemical_equation_given[0]} {chemical_equation_given[1]} {chemical_equation_given[2]} = {calculate_product(chemical_equation_given, chemical_equation_wanted)}')
