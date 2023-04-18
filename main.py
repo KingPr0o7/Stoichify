@@ -6,7 +6,7 @@ from prettytable import DOUBLE_BORDER
 pattern = '[0-9\[\]]'
 
 # Used for clearing the console. (Replit uses Linux) 
-system = 'Linux'
+system = 'Windows'
 
 def clear_console(system):
 	if str(system).lower() == 'windows' or str(system).lower() == 'win':
@@ -78,11 +78,17 @@ def error_detector(eq_type, error_type, string):
 	if error_type == 'format':
 		error_table.title = f'{format_str("PASS_BOLD", "STOICHIFY")} - {format_str("FAIL_BOLD", "EQUATION FORMAT ERROR(S)")}'
 		error_table.field_names = [format_str('PASS_BOLD', 'EXAMPLE OF WANTED'), format_str('FAIL_BOLD', 'GIVEN')]
+		error_table.add_row([format_str('PASS', 'A + Z -> AZ'), format_str('FAIL', string)])
 	elif error_type == 'coefficient':
 		error_table.title = f'{format_str("PASS_BOLD", "STOICHIFY")} - {format_str("FAIL_BOLD", "COEFFICIENT ERROR(S)")}'
 		error_table.field_names = [format_str('PASS_BOLD', 'EXAMPLE OF WANTED'), format_str('FAIL_BOLD', 'GIVEN'), format_str('BOLD', 'TYPE')]
 		if '[' not in string:
 			error_table.add_row([format_str('PASS', '[1]H(2)O'), format_str('FAIL', string), format_str('BOLD', f'[{str(eq_type).upper()}]')])
+
+def print_error_table():
+	print(error_table)
+	error_table.clear_rows()
+	exit()
 
 def calculate_product(given, wanted): # [2]H(2) + O(2) -> [2]H(2)O(2)
 	calculation = float(given[0]) * (get_coefficients(wanted) / get_coefficients(given[2]))
@@ -94,9 +100,25 @@ def calculate_product(given, wanted): # [2]H(2) + O(2) -> [2]H(2)O(2)
 print(type_checker)
 
 chemical_equation = input(f'{format_str("BOLD", "Enter Balanced Equation")}: ').replace(' ', '') # [2]NO + [1]O(2) -> [2]NO(2)
-split_chemical_equation = chemical_equation.split('->')  
-reactants = split_chemical_equation[0].split('+')
-products = split_chemical_equation[1].split('+')
+
+if '->' not in chemical_equation:
+    error_detector(None, 'format', chemical_equation) 
+    print_error_table() 
+else:
+    split_chemical_equation = chemical_equation.split('->')
+	
+if '+' not in split_chemical_equation[0]:
+    error_detector(None, 'format', chemical_equation)
+    print_error_table() 
+else:
+    reactants = split_chemical_equation[0].split('+')
+
+if '+' not in split_chemical_equation[1]:
+    error_detector(None, 'format', chemical_equation)
+    print_error_table() 
+else:
+    products = split_chemical_equation[1].split('+')
+
 
 for index, reactant in enumerate(reactants):
     error_detector('reactant', 'coefficient', reactant)
@@ -104,11 +126,11 @@ for index, reactant in enumerate(reactants):
 for index, product in enumerate(products):
     error_detector('product', 'coefficient', product)
 
-if error_table._rows:
-	print(error_table)
-	error_table.clear()
+print_error_table()
 
 def get_coefficients(string):
+	if string not in chemical_equation: #Placeholder
+		exit() 
 	reactants_coefficients = ''
 
 	for i in range(len(string)):
