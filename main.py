@@ -77,20 +77,40 @@ error_table.set_style(DOUBLE_BORDER)
 def error_detector(eq_type, error_type, string):
 	if error_type == 'format':
 		error_table.title = f'{format_str("PASS_BOLD", "STOICHIFY")} - {format_str("FAIL_BOLD", "EQUATION FORMAT ERROR(S)")}'
-		error_table.field_names = [format_str('PASS_BOLD', 'EXAMPLE OF WANTED'), format_str('FAIL_BOLD', 'GIVEN')]
+		error_table.field_names = [format_str('PASS_BOLD', 'EXAMPLES OF WANTED'), format_str('FAIL_BOLD', 'GIVEN')]
 		error_table.add_row([format_str('PASS', 'A + Z -> AZ'), format_str('FAIL', string)])
+		error_table.add_row([format_str('PASS', 'AZ + Y -> AY + Z'), ''])
 	elif error_type == 'coefficient':
 		error_table.title = f'{format_str("PASS_BOLD", "STOICHIFY")} - {format_str("FAIL_BOLD", "COEFFICIENT ERROR(S)")}'
 		error_table.field_names = [format_str('PASS_BOLD', 'EXAMPLE OF WANTED'), format_str('FAIL_BOLD', 'GIVEN'), format_str('BOLD', 'TYPE')]
 		if '[' not in string:
 			error_table.add_row([format_str('PASS', '[1]H(2)O'), format_str('FAIL', string), format_str('BOLD', f'[{str(eq_type).upper()}]')])
+	elif error_type == 'format_given':
+		error_table.title = f'{format_str("PASS_BOLD", "STOICHIFY")} - {format_str("FAIL_BOLD", "INPUT FORMAT ERROR(S)")}'
+		error_table.field_names = [format_str('PASS_BOLD', 'EXAMPLE OF WANTED'), format_str('FAIL_BOLD', 'GIVEN')]
+		error_table.add_row([format_str('PASS', '13.7 mol H(2)O'), format_str('FAIL', string)])
+	elif error_type == 'missing':
+		error_table.title = f'{format_str("PASS_BOLD", "STOICHIFY")} - {format_str("FAIL_BOLD", "GIVEN SUBSTANCE IS MISSING")}'
+		error_table.field_names = [format_str('PASS_BOLD', 'ALL SUBSTANCES'), format_str('FAIL_BOLD', 'GIVEN')]
+		error_table.add_row([format_str('PASS', chemical_equation), format_str('FAIL', string)])
+		print_error_table()
 
 def print_error_table():
 	print(error_table)
-	error_table.clear_rows()
+	error_table.clear()
 	exit()
 
-def calculate_product(given, wanted): # [2]H(2) + O(2) -> [2]H(2)O(2)
+def get_coefficients(string):
+	reactants_coefficients = ''
+
+	for i in range(len(string)):
+		if '[' == string[i]:
+			while string[i + 1] != ']':
+				reactants_coefficients += string[i + 1]
+				i += 1
+	return float(reactants_coefficients)
+
+def calculate_product(given, wanted): # [3]H(2) + [1]N(2) -> [2]NH(3)
 	calculation = float(given[0]) * (get_coefficients(wanted) / get_coefficients(given[2]))
 	wanted = re.sub(r'\[\d+\]', '', wanted)
 	calculation = f'{format_str("PASS_BOLD", f"{calculation} {given[1]} {wanted}")}'
@@ -107,16 +127,11 @@ if '->' not in chemical_equation:
 else:
     split_chemical_equation = chemical_equation.split('->')
 	
-if '+' not in split_chemical_equation[0]:
+if '+' not in chemical_equation:
     error_detector(None, 'format', chemical_equation)
     print_error_table() 
 else:
     reactants = split_chemical_equation[0].split('+')
-
-if '+' not in split_chemical_equation[1]:
-    error_detector(None, 'format', chemical_equation)
-    print_error_table() 
-else:
     products = split_chemical_equation[1].split('+')
 
 
@@ -126,21 +141,21 @@ for index, reactant in enumerate(reactants):
 for index, product in enumerate(products):
     error_detector('product', 'coefficient', product)
 
-print_error_table()
+if error_table.rows:
+	print_error_table()
 
-def get_coefficients(string):
-	if string not in chemical_equation: #Placeholder
-		exit() 
-	reactants_coefficients = ''
-
-	for i in range(len(string)):
-		if '[' == string[i]:
-			while string[i + 1] != ']':
-				reactants_coefficients += string[i + 1]
-				i += 1
-	return float(reactants_coefficients)
+error_table.clear
+error_table = PrettyTable()
+error_table.set_style(DOUBLE_BORDER)
 
 chemical_equation_given = input(f'{format_str("BOLD", "Enter Given")}: ').split(' ') # 12.3 mol [2]H(2)
+
+if chemical_equation_given[2] not in chemical_equation:
+	error_detector(None, 'missing', chemical_equation_given[2])
+
 chemical_equation_wanted = input(f'{format_str("BOLD", "Enter Wanted")}: ') # [2]H(2)O
+
+if chemical_equation_wanted not in chemical_equation:
+	error_detector(None, 'missing', chemical_equation_wanted)
 
 print(f'\n{format_str("BOLD", "Answer")}: {chemical_equation_given[0]} {chemical_equation_given[1]} {chemical_equation_given[2]} = {calculate_product(chemical_equation_given, chemical_equation_wanted)}')
