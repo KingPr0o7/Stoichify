@@ -85,6 +85,8 @@ def error_detector(eq_type, error_type, string):
 		error_table.field_names = [format_str('PASS_BOLD', 'EXAMPLE OF WANTED'), format_str('FAIL_BOLD', 'GIVEN'), format_str('BOLD', 'TYPE')]
 		if '[' not in string:
 			error_table.add_row([format_str('PASS', '[1]H(2)O'), format_str('FAIL', string), format_str('BOLD', f'[{str(eq_type).upper()}]')])
+		elif '(' not in string:
+			error_table.add_row([format_str('PASS', '[1]H(2)O'), format_str('FAIL', string), format_str('BOLD', f'[{str(eq_type).upper()}]')])
 	elif error_type == 'format_given':
 		error_table.title = f'{format_str("PASS_BOLD", "STOICHIFY")} - {format_str("FAIL_BOLD", "INPUT FORMAT ERROR(S)")}'
 		error_table.field_names = [format_str('PASS_BOLD', 'EXAMPLE OF WANTED'), format_str('FAIL_BOLD', 'GIVEN')]
@@ -99,6 +101,25 @@ def print_error_table():
 	print(error_table)
 	error_table.clear()
 	exit()
+
+type_checker_given = PrettyTable()
+type_checker_given.set_style(DOUBLE_BORDER)
+type_checker_given.title = f'{format_str("PASS_BOLD", "STOICHIFY")} - {format_str("WARNING_BOLD", "TYPE CHECKER")}'
+type_checker_given.field_names = [format_str("BOLD", "FORMAT - NUMBER mol SUBSTANCE IN CE")]
+type_checker_given.add_row([format_str("PASS", "13.7 mol [2]NiBr(4)")])
+type_checker_given.add_row([format_str("PASS", "13.7 mol H(2)O")])
+type_checker_given.add_row([format_str("FAIL", "13.7m H(2)O")])
+type_checker_given.add_row([format_str("FAIL", "13.7 moles of H(2)O")])
+
+type_checker_wanted = PrettyTable()
+type_checker_wanted.set_style(DOUBLE_BORDER)
+type_checker_wanted.title = f'{format_str("PASS_BOLD", "STOICHIFY")} - {format_str("WARNING_BOLD", "TYPE CHECKER")}'
+type_checker_wanted.field_names = [format_str("BOLD", "FORMAT - SUBSTANCE IN CE")]
+type_checker_wanted.add_row([format_str("PASS", "[2]NiBr(4)")])
+type_checker_wanted.add_row([format_str("PASS", "H(2)O")])
+type_checker_wanted.add_row([format_str("FAIL", "H2O")])
+type_checker_wanted.add_row([format_str("FAIL", "2O2")])
+
 
 def get_coefficients(string):
 	reactants_coefficients = ''
@@ -119,20 +140,21 @@ def calculate_product(given, wanted): # [3]H(2) + [1]N(2) -> [2]NH(3)
 # --------------------------------------------------------------- #
 print(type_checker)
 
-chemical_equation = input(f'{format_str("BOLD", "Enter Balanced Equation")}: ').replace(' ', '') # [2]NO + [1]O(2) -> [2]NO(2)
+chemical_equation = input(f'{format_str("BOLD", "Enter Chemical Equation")}: ')
+chemical_equation_trimmed = chemical_equation.replace(' ', '') # [2]NO + [1]O(2) -> [2]NO(2)
 
-if '->' not in chemical_equation:
-    error_detector(None, 'format', chemical_equation) 
+if '->' not in chemical_equation_trimmed:
+    error_detector(None, 'format', chemical_equation_trimmed) 
     print_error_table() 
 else:
-    split_chemical_equation = chemical_equation.split('->')
+    split_chemical_equation_trimmed = chemical_equation_trimmed.split('->')
 	
-if '+' not in chemical_equation:
-    error_detector(None, 'format', chemical_equation)
+if '+' not in chemical_equation_trimmed:
+    error_detector(None, 'format', chemical_equation_trimmed)
     print_error_table() 
 else:
-    reactants = split_chemical_equation[0].split('+')
-    products = split_chemical_equation[1].split('+')
+    reactants = split_chemical_equation_trimmed[0].split('+')
+    products = split_chemical_equation_trimmed[1].split('+')
 
 
 for index, reactant in enumerate(reactants):
@@ -148,14 +170,39 @@ error_table.clear
 error_table = PrettyTable()
 error_table.set_style(DOUBLE_BORDER)
 
+clear_console(system)
+print(type_checker_given)
+print(f'{format_str("PASS_BOLD", "CHEMICAL EQUATION:")} {format_str("PASS", chemical_equation)}')
+
 chemical_equation_given = input(f'{format_str("BOLD", "Enter Given")}: ').split(' ') # 12.3 mol [2]H(2)
 
-if chemical_equation_given[2] not in chemical_equation:
+if chemical_equation_given[0].isdigit():
+	error_detector(None, 'format_given', chemical_equation_given[0])
+	print_error_table()
+else:
+	try:
+		float_value = float(chemical_equation_given[0])
+	except ValueError:
+		error_detector(None, 'format_given', chemical_equation_given[0])
+		print_error_table()        
+
+print(chemical_equation_given[1])
+
+if 'mol' not in chemical_equation_given[1]:
+	error_detector(None, 'format_given', chemical_equation_given[1])
+	print_error_table()
+
+if chemical_equation_given[2] not in chemical_equation_trimmed:
 	error_detector(None, 'missing', chemical_equation_given[2])
+
+clear_console(system)
+print(type_checker_wanted)
+print(f'{format_str("PASS_BOLD", "CHEMICAL EQUATION:")} {format_str("PASS", chemical_equation)}')
+print(f'{format_str("PASS_BOLD", "GIVEN:")} {format_str("PASS", f"{chemical_equation_given[0]} {chemical_equation_given[1]} {chemical_equation_given[2]}")}')
 
 chemical_equation_wanted = input(f'{format_str("BOLD", "Enter Wanted")}: ') # [2]H(2)O
 
-if chemical_equation_wanted not in chemical_equation:
+if chemical_equation_wanted not in chemical_equation_trimmed:
 	error_detector(None, 'missing', chemical_equation_wanted)
 
 print(f'\n{format_str("BOLD", "Answer")}: {chemical_equation_given[0]} {chemical_equation_given[1]} {chemical_equation_given[2]} = {calculate_product(chemical_equation_given, chemical_equation_wanted)}')
