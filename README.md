@@ -1,4 +1,4 @@
-<p align="center"><img src="stoichify_paper_logo.png?raw=true" alt="Stoichify - Your go-to Stoichiometric solver."></p>
+<p align="center"><img src="images/stoichify_paper_logo.png?raw=true" alt="Stoichify - Your go-to Stoichiometric solver."></p>
 
 <h1 align="center">Stoichify - The Stoichiometry Solver</h1>
 
@@ -21,4 +21,4 @@ The initial release of Stoichify, being a Computer Science II project, being a c
 ## License
 Due to the nature of this project, and how capable it'll be, this project will be protected by the [`GNU Affero General Public License Version 3 (AGPL-3.0)`](./LICENSE). Intended to yield further projects to be **open source for the public**. Entities are *free to change and upload Stoichify else-where* — as long as it's instilled via [AGPL-3.0](./LICENSE). 
 
-<p align="center"><img src="np_logo.png?raw=true" alt="Nathan Parker's Logo"></p>
+<p align="center"><img src="images/np_logo.png?raw=true" alt="Nathan Parker's Logo"></p>
