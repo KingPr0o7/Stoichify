@@ -1,44 +1,34 @@
 import tkinter as tk # Framework for GUI (Probably Install?)
-import ttkbootstrap as ttk # Bootstrap theme for GUI (Need to install)
-
-def convert():
-	value = input_integer.get()
-	output_string.set(value)
+from tkinter import ttk
+import sv_ttk # Custom theme for ttk (https://github.com/rdbende/Sun-Valley-ttk-theme - pip install sv-ttk)
+from PIL import Image, ImageTk # Pillow image library (pip install pillow)
 
 #
 # Window Configuration
 #   Define the window configuration; instance, title and size.
 #
 
-window = ttk.Window(themename= "darkly") # Initialize the window with the darkly theme
+window = tk.Tk()
 window.title("Stoichify")
-window.geometry("800x600") # Window size (Width x Height)
+window.geometry("1600x900") # Window size (Width x Height)
+sv_ttk.set_theme("dark") # Set Sun Valley to dark mode
 
 #
 # Elements within the window
-#   Define the elements within the window; title, input form, submit button, output label.
+#   Define the elements within the window; navbar, logo, label and button.
 #
 
-# Title
-title_label = ttk.Label(window, text="Stoichify", font="Arial 24 bold")
-title_label.pack()
+navbar = ttk.Frame(window)
+navbar.pack(side="top", fill="x")
 
-# Input Form, Submit Button, and Output Label linked to the convert function
-input_frame = ttk.Frame(window)
+logo = Image.open("images/stoichify_logo.png").resize((200, 81))
+logo_tk = ImageTk.PhotoImage(logo)
 
-input_integer = tk.IntVar()
-input_form = ttk.Entry(input_frame, textvariable=input_integer)
+label = ttk.Label(navbar, text="Stoichify", image=logo_tk)
+label.pack(side="left", padx=10)
 
-submit_button = ttk.Button(input_frame, text="Submit", command=convert)
-
-output_string = tk.StringVar()
-output_label = ttk.Label(window, text="Output", font="Arial 12", textvariable=output_string)
-
-# Pack said elements into the window
-input_form.pack(side="left", padx=10)
-submit_button.pack(side="left")
-input_frame.pack(pady=10) 
-output_label.pack(pady=10)
+button = ttk.Button(window, text="Click me!")
+button.pack()
 
 #
 # Main Loop
