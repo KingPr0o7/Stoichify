@@ -21,7 +21,7 @@ sv_ttk.set_theme("dark") # Set Sun Valley to dark mode
 navbar = ttk.Frame(window)
 navbar.pack(side="top", fill="x")
 
-logo = Image.open("images/stoichify_logo.png").resize((200, 81))
+logo = Image.open("./images/stoichify_logo.png").resize((200, 81))
 logo_tk = ImageTk.PhotoImage(logo)
 
 label = ttk.Label(navbar, text="Stoichify", image=logo_tk)
