@@ -14,7 +14,8 @@
 #   in this module.
 #
 
-import re # Regular Expressions
+import re # Regular Expressions (String Checking)
+import fractions # Fraction Utils (Finding the Greatest Common Denominator (GCD))
 
 #
 # Constants
@@ -34,8 +35,8 @@ LOWERCASE = "^[a-z]$"
 
 chemical_equation = {
 	"string": "",
-	"reactants": {},
-	"products": {}
+	"reactants": [],
+	"products": []
 }
 
 def element_scanner(index, substance):
@@ -86,16 +87,15 @@ def substance_scanner(side, substance_list):
 				else:
 					if len(element) == 2: # Move pointer over 2, to get to the end of the two-lettered elements
 						string_dilation = 2
+						if string_dilation + index > len(substance) - 1:
+							string_dilation = 1
 					if index + 1 < len(substance) and str(substance[index + string_dilation]).isdigit(): # Check if next char is a number, while in range.
-						element_subscript = substance_coefficient * int(substance[index + string_dilation]) * element_multiplier # Account for the coefficients, subscript, and parentheses (multipliers). 
-						if DEBUG_MODE == True:
-							if index + 1 < len(substance):
-								print(f"{element}({element_subscript}) [Coefficient: {substance_coefficient} * Subscript: {str(substance[index + string_dilation])} * Multiplier: {element_multiplier}]")
+						element_subscript = int(substance[index + string_dilation])
 					else: # If not a number, the subscript is 1.
-						if DEBUG_MODE == True:
-							print(f"{element}({element_subscript}) [Coefficient: {substance_coefficient} * Subscript: {element_subscript} * Multiplier: {element_multiplier}]")
-						element_subscript = substance_coefficient * element_subscript * element_multiplier # Account for the coefficients, subscript (1), and parentheses (multipliers).
-					chemical_equation[f"{side}"][element] = element_subscript  
+						element_subscript = element_subscript
+					# print(element, substance_coefficient, element_subscript, element_multiplier)
+					element_data = (substance_coefficient, element_subscript, element_multiplier)
+					chemical_equation[side].append((element, element_data))
 
 def chemical_equation_balancer(equation):
 	chemical_equation["string"] = str(equation)
@@ -107,7 +107,31 @@ def chemical_equation_balancer(equation):
 	substance_scanner("reactants", reactants)
 	substance_scanner("products", products)
 
+	variables = {}
+ 
+	for reactant_element in chemical_equation['reactants']:
+		reactant_element_amount = reactant_element[1][1] * reactant_element[1][2]
+		if reactant_element[0] not in variables:
+			variables[reactant_element[0]] = [reactant_element_amount]
+		else:
+			variables[reactant_element[0]].append(reactant_element_amount)
+ 
+	for product_element in chemical_equation['products']:
+		product_element_amount = product_element[1][1] * product_element[1][2]
+		if product_element[0] not in variables:
+			variables[product_element[0]] = [product_element_amount]
+		else:
+			variables[product_element[0]].append(product_element_amount)  
 
-chemical_equation_balancer("2AgI + 2Fe2(CO3)3 -> FeI3 + Ag2CO3")
+	known_variable = 1 # The known variable (usually referred to as a) is always going to be 1, to start the chain reactions (pun intended) to solve the unknowns.
+
+# for var in variables:
+# 	fraction = fractions.Fraction(var).limit_denominator()
+	# print(var, fraction)
+
+	print(variables)
+
+     
+chemical_equation_balancer("Ca3(PO4)2 + SiO2 + C -> CaSiO3 + P4 + CO") # AgI + Fe2(CO3)3 -> FeI3 + Ag2CO3 | KMnO4 + HCl -> MnCl2 + KCl + Cl2 + H2O | Al + O2 -> Al2O3 | C2H4 + O2 -> CO2 + H2O
 print(f"Reactant Substances: {chemical_equation['reactants']}")
 print(f"Product Substances: {chemical_equation['products']}")
