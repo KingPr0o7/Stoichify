@@ -1,4 +1,15 @@
 #
+# Nathan Parker | 4/11/24 | v0.3.0
+# A CLI based chemical equation balancer that can balance any chemical equation.
+# Done by collecting subscripts, coefficients, and multipliers from the string (the chemical equation),
+# and to be calculated for their amounts, and processed into a matrix to be solved by linear algebra.
+#
+# DOCUMENTATION COMING SOON. (I need to finish the other logic/steps first.)
+# 	For the time being, please refer to line comments and header comments 
+# 	for an understanding of the code.
+#
+
+#
 # Outline
 #   1. Categorize and split the chemical equation [DONE]
 #	2. Gather stoichiometric coefficients [DONE]
@@ -6,6 +17,8 @@
 # 	4. Apply Mole Ratios
 # 	5. Other (Limiting Reactant, Percent (%) Yield)
 #	6. Error Detection
+#	7. User Interface
+#	8. Show Steps 
 #
 
 #
