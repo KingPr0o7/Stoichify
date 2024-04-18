@@ -113,7 +113,13 @@ def substance_scanner(side, substance_list):
 						if string_dilation + index > len(substance) - 1: # Ensure range
 							string_dilation = 1
 					if index + 1 < len(substance) and str(substance[index + string_dilation]).isdigit(): # Check if next char is a number, while in range.
-						element_subscript = int(substance[index + string_dilation])
+						# Account for multiple digit subscripts (e.g. C6H12O6, C12H22O11, etc.)
+						subscripts = ""
+						subscript_index = index + string_dilation
+						while subscript_index < len(substance) and str(substance[subscript_index]).isdigit(): # Loop through as long as the next character is a number
+							subscripts += substance[subscript_index]
+							subscript_index += 1
+						element_subscript = int(subscripts)
 					else: # If not a number, the subscript is 1.
 						element_subscript = element_subscript
 					element_data = (substance_coefficient, element_subscript, element_multiplier)
@@ -217,7 +223,7 @@ def chemical_equation_balancer(equation):
 
 if __name__ == "__main__":
 	if DEBUG_MODE == True:
-		chemical_equation_balancer("Zn + HNO3 -> Zn(NO3)2 + H2O + N2O") # Insert your chemical equation here
+		chemical_equation_balancer("K4[Fe(SCN)6] + K2Cr2O7 + H2SO4 -> Fe2(SO4)3 + Cr2(SO4)3 + CO2 + H2O + K2SO4 + KNO3") # Insert your chemical equation here
 		print(f"\nReactant Substances: {chemical_equation['reactants']}")
 		print(f"Product Substances: {chemical_equation['products']}") 
 	else:
