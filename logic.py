@@ -139,7 +139,7 @@ def matrix_builder(side):
 					if side == "reactants":
 						matrix_row.append(substance_element[1][1] * substance_element[1][2])
 					else:
-						matrix_row.append(substance_element[1][1] * substance_element[1][2] * -1)
+						matrix_row.append(substance_element[1][1] * substance_element[1][2] * -1) # Exclude negatives + designate products
 					found = True
 					break
 			if not found:
@@ -188,6 +188,8 @@ def chemical_equation_balancer(equation):
  
 	for index, substance in enumerate(substances):
 		if substance != "->":
+			if substance[0].isdigit():
+				substance = substance[1:]
 			if index == len(substances) - 1:
 				chemical_equation["balanced"] += f"{balanced_coefficients[pointer]}{substance}"
 				for_show_balanced += f"\033[1m{balanced_coefficients[pointer]}\033[0m{substance}"
