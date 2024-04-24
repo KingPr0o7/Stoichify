@@ -86,23 +86,26 @@ def substance_scanner(side, substance_list):
 		substance_coefficient = substance[0] # Get the coefficient at the 0th index
 		element_multiplier = 1 # If parentheses aren't detected, the subscript is 1 by default
      
-		if re.match(UPPERCASE, substance_coefficient): # When not provided, a substance has a coefficient of 1
-			substance_coefficient = 1	
-		elif str(substance_coefficient).isdigit(): # When provided
+		if str(substance_coefficient).isdigit(): # When provided
 			substance_coefficient = int(substance[0])
-	
+		else:
+			substance_coefficient = 1 # Default coefficient
+ 
 		chemical_equation[side][substance] = [] # Create a list for each substance in the side
  
 		for index, char in enumerate(substance):
 			element_subscript = 1 # Same as coefficients; if not provided; it's 1.
 			string_dilation = 1 # Used to traverse the string
 
-			if char == "(": # If a set of parentheses is detected, it has to have a subscript (multiplier)  
-				if substance[-1] == "]": # If the last character is a closing bracket, the subscript is the second to last character (the reactant is then a complex ion)
-					element_multiplier = int(substance[-2])
-				else:			
-					element_multiplier = int(substance[-1])
-				continue 
+			if char == "(":
+				closing_parenthesis_index = substance.index(")")
+				element_multiplier = int(substance[closing_parenthesis_index + 1])
+				continue
+			elif char == ")":
+				element_multiplier = 1 # Reset the multiplier
+				continue
+			elif char == "[" or char == "]": # If a closing bracket is detected, it's a complex ion
+				continue
 			elif char != "(" and char != ")":
 				element = element_scanner(index, substance)
 				if element == "-": # Ignore elements that aren't found (trust me bro, the scanner works (at least I hope))
@@ -133,18 +136,15 @@ def matrix_builder(side):
 	for substance in chemical_equation[side]:
 		matrix_row = []
 		for element in chemical_equation["elements"]:
-			found = False
+			element_total = 0
 			for substance_element in chemical_equation[side][substance]:
 				if substance_element[0] == element:
 					if side == "reactants":
-						matrix_row.append(substance_element[1][1] * substance_element[1][2])
+						element_total += substance_element[1][1] * substance_element[1][2]
 					else:
-						matrix_row.append(substance_element[1][1] * substance_element[1][2] * -1) # Exclude negatives + designate products
-					found = True
-					break
-			if not found:
-				matrix_row.append(0)
-		chemical_equation["element_matrix"].append(matrix_row)    
+						element_total += substance_element[1][1] * substance_element[1][2] * -1 # Exclude negatives + designate products
+			matrix_row.append(element_total)
+		chemical_equation["element_matrix"].append(matrix_row)
 
 def chemical_equation_balancer(equation):
 	"""
@@ -155,8 +155,8 @@ def chemical_equation_balancer(equation):
 	"""
 	chemical_equation["unbalanced"] = str(equation)
 
-	reactants = chemical_equation["unbalanced"].replace(" ", "").split("->")[0].split("+")
-	products = chemical_equation["unbalanced"].replace(" ", "").split("->")[1].split("+")
+	reactants = chemical_equation["unbalanced"].replace(" ", "").split("→")[0].split("+")
+	products = chemical_equation["unbalanced"].replace(" ", "").split("→")[1].split("+")
 
 	if DEBUG_MODE == True:
 		print(f"\nReactants: {reactants}", "->", f"Products: {products}", "\n")
@@ -208,6 +208,7 @@ def chemical_equation_balancer(equation):
 	if DEBUG_MODE == True:
 		print(f"\nUnbalanced Chemical Equation: {chemical_equation['unbalanced']}")
 	print(f"Balanced Chemical Equation: {for_show_balanced}")
+	return balanced_coefficients
 
 #
 # Examples of Unbalanced Chemical Equations
@@ -222,6 +223,7 @@ def chemical_equation_balancer(equation):
 # Ca(OH)2 + H3PO4 -> Ca3(PO4)2 + H2O
 # K4[Fe(SCN)6] + K2Cr2O7 + H2SO4 -> Fe2(SO4)3 + Cr2(SO4)3 + CO2 + H2O + K2SO4 + KNO3 (Hardest I could find)
 # Zn + HNO3 -> Zn(NO3)2 + H2O + N2O
+# H2(g) + O2(g) -> H2O(l)
 
 if __name__ == "__main__":
 	if DEBUG_MODE == True:
