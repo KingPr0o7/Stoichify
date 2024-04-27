@@ -22,8 +22,8 @@ class MainWindow:
 		self.user_input = ttk.Frame(self.window)
 		self.user_input.pack(side="bottom", pady=15)
 
-		self.entry = ttk.Entry(self.user_input, textvariable=equation, width=75)
-		self.entry.pack(side="left", padx=15)
+		self.equation_input = ttk.Entry(self.user_input, textvariable=equation, width=75)
+		self.equation_input.pack(side="left", padx=15)
 
 		self.submit = ttk.Button(self.user_input, text="Submit", command=lambda: self.balance_equation(equation.get()))
 		self.submit.pack(side="right")
@@ -50,7 +50,8 @@ class MainWindow:
 		negative_charges = ['-', '−']
 
 		plus_count = str(equation).count('+')
-		if plus_count > len(substances) / 2:
+		delta = (len(substances) - 1) - plus_count
+		if delta > 2:
 			return messagebox.showerror("Equation Charges Check [1]", "Your equation includes charges (Oxidation-Reduction Reactions), which are not supported by Stoichify.")
 
 		for substance in substances:
@@ -91,6 +92,7 @@ class MainWindow:
 		type_checked_equation = self.replace_arrows(equation)
 		reactants = str(type_checked_equation).replace(" ", "").split("→")[0].split("+")
 		products = str(type_checked_equation).replace(" ", "").split("→")[1].split("+")
+		reactants.append("→")
 		substances = reactants + products
 	
 		self.detect_substance_charges(type_checked_equation)
@@ -98,12 +100,20 @@ class MainWindow:
 		type_checked_equation = self.remove_substance_states(type_checked_equation)
 		return type_checked_equation
 
+	def insert_subscripts(self, string):
+		"""
+		Inserts the subscript versions of integers provided in the string.
+		"""
+
+		subscript_digits = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
+		return string.translate(subscript_digits)
+
 	def balance_equation(self, equation):
 		"""
 		Balances the chemical equation using the Stoichify algorithm.
 		"""
 		type_checked_equation = self.type_checking(equation)
-		balanced_coefficients = logic.chemical_equation_balancer(type_checked_equation)
+		balanced_coefficients = logic.chemical_equation_balancer(type_checked_equation)[0]
 
 		pointer = 0
 		balanced_equation = ""
@@ -112,8 +122,7 @@ class MainWindow:
 			if substance != "→":
 				if substance[0].isdigit():
 					substance = substance[1:]
-				subscript_digits = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
-				substance = substance.translate(subscript_digits)
+				self.insert_subscripts(substance)
 				if index == len(substances) - 1:
 					balanced_equation += f"{balanced_coefficients[pointer]}{substance}"
 				else:
@@ -125,9 +134,29 @@ class MainWindow:
 			else:
 				balanced_equation += "→ "  
 
-		print(balanced_equation)
 		showing_chemical_equation = tk.Label(self.window, text=balanced_equation, font=("Times New Roman", 20))
 		showing_chemical_equation.pack()
+
+		self.equation_input.destroy()
+		self.substance_amount = ttk.Entry(self.user_input, width=10)
+		self.substance_amount.pack(side="left")
+  
+		self.substance_measurement = ttk.Combobox(self.user_input, values=["g", "mol", "L", "atoms / r.p."], width=10, state="readonly")
+		self.substance_measurement.pack(side="left", padx=5)
+  
+		self.substance_string_break = ttk.Label(self.user_input, text="of", font=("Times New Roman", 20))
+		self.substance_string_break.pack(side="left")
+  
+		formatted_substances = []
+  
+		for substance in substances:
+			substance = self.insert_subscripts(substance)
+			if substance == "→":
+				continue
+			formatted_substances.append(substance)
+
+		self.given_substance = ttk.Combobox(self.user_input, values=formatted_substances, width=10, state="readonly")
+		self.given_substance.pack(side="left", padx=5)
 
 	def run(self):
 		self.window.mainloop()

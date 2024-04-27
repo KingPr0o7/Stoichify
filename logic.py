@@ -159,7 +159,7 @@ def chemical_equation_balancer(equation):
 	products = chemical_equation["unbalanced"].replace(" ", "").split("→")[1].split("+")
 
 	if DEBUG_MODE == True:
-		print(f"\nReactants: {reactants}", "->", f"Products: {products}", "\n")
+		print(f"\nReactants: {reactants}", "→", f"Products: {products}", "\n")
 
 	substance_scanner("reactants", reactants)
 	substance_scanner("products", products)
@@ -180,21 +180,21 @@ def chemical_equation_balancer(equation):
 	if DEBUG_MODE == True:
 		print(f"Chemical Matrix: {chemical_equation['element_matrix']} = {balanced_coefficients}\n")
 
-	reactants.append("->")
+	reactants.append("→")
 	substances = reactants + products
 	pointer = 0
 
 	for_show_balanced = ""
  
 	for index, substance in enumerate(substances):
-		if substance != "->":
+		if substance != "→":
 			if substance[0].isdigit():
 				substance = substance[1:]
 			if index == len(substances) - 1:
 				chemical_equation["balanced"] += f"{balanced_coefficients[pointer]}{substance}"
 				for_show_balanced += f"\033[1m{balanced_coefficients[pointer]}\033[0m{substance}"
 			else:
-				if substances[index + 1] != "->":
+				if substances[index + 1] != "→":
 					chemical_equation["balanced"] += f"{balanced_coefficients[pointer]}{substance} + "
 					for_show_balanced += f"\033[1m{balanced_coefficients[pointer]}\033[0m{substance} + "
 				else:
@@ -202,34 +202,33 @@ def chemical_equation_balancer(equation):
 					for_show_balanced += f"\033[1m{balanced_coefficients[pointer]}\033[0m{substance} "
 			pointer += 1
 		else:
-			chemical_equation["balanced"] += "-> " 
-			for_show_balanced += "-> "
+			chemical_equation["balanced"] += "→ " 
+			for_show_balanced += "→ "
 
 	if DEBUG_MODE == True:
 		print(f"\nUnbalanced Chemical Equation: {chemical_equation['unbalanced']}")
-	print(f"Balanced Chemical Equation: {for_show_balanced}")
-	return balanced_coefficients
+	return balanced_coefficients, chemical_equation["balanced"]
 
 #
 # Examples of Unbalanced Chemical Equations
 #
-# AgI + Fe2(CO3)3 -> FeI3 + Ag2CO3 
-# KMnO4 + HCl -> MnCl2 + KCl + Cl2 + H2O
-# Al + O2 -> Al2O3
-# C2H4 + O2 -> CO2 + H2O
-# Ca3(PO4)2 + SiO2 + C -> CaSiO3 + P4 + CO
-# NH3 + O2 -> NO + H2O
-# NaOH + H2S04 -> Na2S04 + H20
-# Ca(OH)2 + H3PO4 -> Ca3(PO4)2 + H2O
-# K4[Fe(SCN)6] + K2Cr2O7 + H2SO4 -> Fe2(SO4)3 + Cr2(SO4)3 + CO2 + H2O + K2SO4 + KNO3 (Hardest I could find)
-# Zn + HNO3 -> Zn(NO3)2 + H2O + N2O
-# H2(g) + O2(g) -> H2O(l)
+# AgI + Fe2(CO3)3 → FeI3 + Ag2CO3 
+# KMnO4 + HCl → MnCl2 + KCl + Cl2 + H2O
+# Al + O2 → Al2O3
+# C2H4 + O2 → CO2 + H2O
+# Ca3(PO4)2 + SiO2 + C → CaSiO3 + P4 + CO
+# NH3 + O2 → NO + H2O
+# NaOH + H2S04 → Na2S04 + H20
+# Ca(OH)2 + H3PO4 → Ca3(PO4)2 + H2O
+# K4[Fe(SCN)6] + K2Cr2O7 + H2SO4 → Fe2(SO4)3 + Cr2(SO4)3 + CO2 + H2O + K2SO4 + KNO3 (Hardest I could find)
+# Zn + HNO3 → Zn(NO3)2 + H2O + N2O
+# H2(g) + O2(g) → H2O(l)
 
 if __name__ == "__main__":
 	if DEBUG_MODE == True:
-		chemical_equation_balancer("K4[Fe(SCN)6] + K2Cr2O7 + H2SO4 -> Fe2(SO4)3 + Cr2(SO4)3 + CO2 + H2O + K2SO4 + KNO3") # Insert your chemical equation here
+		print(chemical_equation_balancer("K4[Fe(SCN)6] + K2Cr2O7 + H2SO4 → Fe2(SO4)3 + Cr2(SO4)3 + CO2 + H2O + K2SO4 + KNO3")[1]) # Insert your chemical equation here
 		print(f"\nReactant Substances: {chemical_equation['reactants']}")
 		print(f"Product Substances: {chemical_equation['products']}") 
 	else:
 		user_chemical_equation = input("Enter a chemical equation: ")
-		chemical_equation_balancer(user_chemical_equation)
+		print(chemical_equation_balancer(user_chemical_equation)[1])
