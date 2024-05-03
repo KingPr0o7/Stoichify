@@ -30,7 +30,8 @@
 import re # Regular Expressions (String Checking)
 import sympy # Symbolic Mathematics (Equations)
 from sympy import Matrix, lcm # Matrix Operations, Least Common Multiple
-
+import math # Mathematics (Rounding)
+from chemlib import Element # Chemical Library (Molar Masses)
 #
 # Constants
 #   Required scientific numbers used to bridge needed calculations.
@@ -38,7 +39,7 @@ from sympy import Matrix, lcm # Matrix Operations, Least Common Multiple
 
 DEBUG_MODE = False # Toggle to True to see the properties of the chemical equation 
 STP = 22.4 # Standard Temperature and Pressure (L/mol)
-AVOGADRO = 6.022 * 10**23 # Avogadro's number (particles/mol)
+AVOGADRO = 6.02214 * 10**23 # Avogadro's number (particles/mol)]
 UPPERCASE = "^[A-Z]$"
 LOWERCASE = "^[a-z]$"
 
@@ -58,11 +59,11 @@ chemical_equation = {
 
 def element_scanner(index, substance):
 	"""
-    Takes a string (AKA a substance) and first scans for a capital character.
-    Upon finding a capital letter, it checks the next character's capitalization state 
-    to see if it's a two-lettered element. If the second character isn't a lowercase 
-    character it's a single element. 
-    """
+	Takes a string (AKA a substance) and first scans for a capital character.
+	Upon finding a capital letter, it checks the next character's capitalization state 
+	to see if it's a two-lettered element. If the second character isn't a lowercase 
+	character it's a single element. 
+	"""
 	element = "-"
 	if index <= len(substance): # Ensure within range
 		if re.match(UPPERCASE, substance[index]):
@@ -74,31 +75,29 @@ def element_scanner(index, substance):
 		chemical_equation["elements"].append(element)
 	return element
 			
-    
-def substance_scanner(side, substance_list):
+	
+def substance_scanner(side, substance_list, mode="iteration"):
 	"""
-    Loops through one side (reactants or products) of a chemical equation,
-    checking each substance's coefficient (always placed at the 0th index). 
-    Then, loops within such side (a substance) to perform element scans and
-    subscript calculations to be added the chemical_equation dictionary. 
-    """
+	Loops through one side (reactants or products) of a chemical equation,
+	setting each substance's coefficient to 1 (they aren't needed). 
+	Then, loops within such side (a substance) to perform element scans and
+	subscript calculations to be added the chemical_equation dictionary. 
+	"""
 	for substance in substance_list:
-		substance_coefficient = substance[0] # Get the coefficient at the 0th index
+		substance_coefficient = 1
 		element_multiplier = 1 # If parentheses aren't detected, the subscript is 1 by default
-     
-		if str(substance_coefficient).isdigit(): # When provided
-			substance_coefficient = int(substance[0])
-		else:
-			substance_coefficient = 1 # Default coefficient
  
-		chemical_equation[side][substance] = [] # Create a list for each substance in the side
+		if mode == "iteration":
+			chemical_equation[side][substance] = [] # Create a list for each substance in the side
+		elif mode == "inspection":
+			substance_elemental_makeup = []
  
 		for index, char in enumerate(substance):
 			element_subscript = 1 # Same as coefficients; if not provided; it's 1.
 			string_dilation = 1 # Used to traverse the string
 
 			if char == "(":
-				closing_parenthesis_index = substance.index(")")
+				closing_parenthesis_index = str(substance).index(")")
 				element_multiplier = int(substance[closing_parenthesis_index + 1])
 				continue
 			elif char == ")":
@@ -126,7 +125,12 @@ def substance_scanner(side, substance_list):
 					else: # If not a number, the subscript is 1.
 						element_subscript = element_subscript
 					element_data = (substance_coefficient, element_subscript, element_multiplier)
-					chemical_equation[side][substance].append((element, element_data))
+					if mode == "iteration":
+						chemical_equation[side][substance].append((element, element_data))
+					elif mode == "inspection":
+						substance_elemental_makeup.append((element, element_data))
+		if mode == "inspection":
+			return substance_elemental_makeup
 
 def matrix_builder(side):
 	"""
@@ -188,8 +192,9 @@ def chemical_equation_balancer(equation):
  
 	for index, substance in enumerate(substances):
 		if substance != "→":
-			if substance[0].isdigit():
-				substance = substance[1:]
+			substance = re.sub(r'^\d+(?=[A-Z])', '', substance)
+			subscript_digits = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
+			substance = substance.translate(subscript_digits)
 			if index == len(substances) - 1:
 				chemical_equation["balanced"] += f"{balanced_coefficients[pointer]}{substance}"
 				for_show_balanced += f"\033[1m{balanced_coefficients[pointer]}\033[0m{substance}"
@@ -207,8 +212,125 @@ def chemical_equation_balancer(equation):
 
 	if DEBUG_MODE == True:
 		print(f"\nUnbalanced Chemical Equation: {chemical_equation['unbalanced']}")
-	return balanced_coefficients, chemical_equation["balanced"]
+	return chemical_equation["balanced"]
 
+def substance_coefficient(substance):
+	"""
+	"""
+	coefficient_match = re.match(r"(\d+)[A-Z]", substance)
+	coefficient = 1
+	if coefficient_match:
+		coefficient = int(coefficient_match.group(1))
+	return coefficient
+
+def significant_figures_counter(figures: list, mode):
+	"""
+	"""
+	significant_figures = []
+	if isinstance(figures[0], str):
+		if mode == "*":
+			if "." in figures[0]:
+				figure = figures[0].replace(".", "")
+				zeros_removed = figure.lstrip("0")
+			else:
+				zeros_removed = figures[0].lstrip("0").rstrip("0")
+			significant_figures = len(zeros_removed)
+			return significant_figures, figures[0]
+	else:
+		for figure in figures:
+				if "." in str(figure):
+					if mode == "+":
+						significant_figures.append(len(str(figure).split(".")[1]))
+					elif mode == "*":
+						figure = str(figure).replace(".", "")
+						zeros_removed = figure.lstrip("0").rstrip("0")
+						significant_figures.append(len(zeros_removed))
+				else:
+					if mode == "+":
+						significant_figures.append(0)
+	if mode == "+":
+		significant_figures = min(significant_figures)
+	return significant_figures
+
+def significant_figure_rounder(num, sig_figs):
+	"""
+	https://stackoverflow.com/a/3411435/20617039
+	"""
+	if num != 0:
+		result = round(num, -int(math.floor(math.log10(abs(num))) + (1 - sig_figs)))
+		if sig_figs <= math.floor(math.log10(abs(num))) + 1:
+			return int(result)
+		else:
+			return result
+	else:
+		return 0  # Can't take the log of 0
+
+def measurement_converter(amount, measurement, substance, type):
+	significant_figures = 0
+    
+	if measurement == "L":
+		amount = amount * STP if type == "*" else amount / STP if type == "/" else amount
+		significant_figures = 3
+	elif measurement == "atoms / r.p.":
+		amount = amount * AVOGADRO if type == "*" else amount / AVOGADRO if type == "/" else amount
+		significant_figures = 6
+	elif measurement == "g":
+		elemental_makeup = substance_scanner("-", [substance], "inspection")
+		molar_masses = []
+		molar_mass = 0
+
+		for element in elemental_makeup:
+			atomic_mass = Element(element[0]).properties['AtomicMass']
+			molar_masses.append(atomic_mass)
+			molar_mass += atomic_mass * element[1][1]
+
+		print(f"Molar Masses: {molar_masses}")
+
+		significant_figures = significant_figures_counter(molar_masses, "+")
+		print(f"Significant Figures: {significant_figures} ({molar_masses})")
+
+		molar_mass = round(molar_mass, significant_figures)
+		print(f"Molar Mass: {molar_mass}")
+		amount = amount * molar_mass if type == "*" else amount / molar_mass if type == "/" else amount
+
+	return amount, significant_figures
+
+def stoichify(given_amount, given_significant_figures, given_measurement, given_substance, wanted_measurement, wanted_substance):
+	"""
+	"""
+	answer = 0
+	current_measurement = given_measurement
+	significant_figures = []
+	significant_figures.append(given_significant_figures)
+
+	if current_measurement != "mol":
+		given_amount, conversion_significant_figures = measurement_converter(given_amount, given_measurement, given_substance, "/")
+		current_measurement = "mol"
+		significant_figures.append(conversion_significant_figures)
+  
+	# Molar Bridge
+	wanted_coefficient = substance_coefficient(wanted_substance)
+	given_coefficient = substance_coefficient(given_substance)
+	answer = given_amount * (wanted_coefficient / given_coefficient)
+	significant_figures.append(float('inf'))
+	significant_figures.append(float('inf'))
+
+	if wanted_measurement != "mol":
+		answer, conversion_significant_figures = measurement_converter(answer, wanted_measurement, wanted_substance, "*")
+		significant_figures.append(conversion_significant_figures)
+ 
+	print(f"Significant Figures: {significant_figures} (Lowest: {min(significant_figures)})\nAnswer: {answer}")
+ 
+	answer = significant_figure_rounder(answer, min(significant_figures))
+
+	return f"{answer} {wanted_measurement} {wanted_substance}"
+		
+
+# if decimal_places == 0:
+# 	return int(number + 0.5)
+# else: 
+# 	value = 10 ** decimal_places
+# 	return int(number * value + 0.5) / value 
 #
 # Examples of Unbalanced Chemical Equations
 #
@@ -226,9 +348,30 @@ def chemical_equation_balancer(equation):
 
 if __name__ == "__main__":
 	if DEBUG_MODE == True:
-		print(chemical_equation_balancer("K4[Fe(SCN)6] + K2Cr2O7 + H2SO4 → Fe2(SO4)3 + Cr2(SO4)3 + CO2 + H2O + K2SO4 + KNO3")[1]) # Insert your chemical equation here
+		print(chemical_equation_balancer("K4[Fe(SCN)6] + K2Cr2O7 + H2SO4 → Fe2(SO4)3 + Cr2(SO4)3 + CO2 + H2O + K2SO4 + KNO3")) # Insert your chemical equation here
 		print(f"\nReactant Substances: {chemical_equation['reactants']}")
 		print(f"Product Substances: {chemical_equation['products']}") 
 	else:
-		user_chemical_equation = input("Enter a chemical equation: ")
-		print(chemical_equation_balancer(user_chemical_equation)[1])
+		# print(chemical_equation_balancer("C3H8 + O2 → CO2 + H2O"))
+		# print(stoichify(2.8, 2, "mol", "1C3H8", "g", "3CO2")) # Insert your stoichiometry here
+  
+		# print(chemical_equation_balancer("SO2 + O2 → SO3"))
+		# print(stoichify(3.4, 2, "mol", "2SO2", "mol", "2SO3"))
+
+		# print(chemical_equation_balancer("SO2 + O2 → SO3"))
+		# print(stoichify(4.7, 2, "mol", "2SO2", "mol", "1O2"))
+  
+		# print(chemical_equation_balancer("C3H8 + O2 → CO2 + H2O"))
+		# print(stoichify(25, 2, "g", "1C3H8", "mol", "4H2O"))
+  
+		# print(chemical_equation_balancer("C3H8 + O2 → CO2 + H2O"))
+		# print(stoichify(38, 2, "g", "4H2O", "mol", "3CO2"))		
+
+		# print(chemical_equation_balancer("Al + Cl2 → AlCl3"))
+		# print(stoichify(35, 2, "g", "2Al", "g", "2AlCl3"))
+
+		print(chemical_equation_balancer("Al + Cl2 → AlCl3"))
+		print(stoichify(42.8, 3, "g", "2Al", "g", "3Cl2"))
+
+		# user_chemical_equation = input("Enter a chemical equation: ")
+		# print(chemical_equation_balancer(user_chemical_equation))
