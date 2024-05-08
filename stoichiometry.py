@@ -6,8 +6,9 @@ class Stoichify:
 	figures (weather that be in addition, subtraction, division or multiplication),
 	throughout the calculations, to ensure the provided maximum precision and accuracy.
 	"""
-	def __init__(self, balanced_dict):
+	def __init__(self, balanced_dict, work_shown: list):
 		self.balanced_dict = balanced_dict
+		self.work_shown = list(work_shown)
 
 	def solve(self, given_amount, given_significant_figures, given_measurement, given_substance, wanted_measurement, wanted_substance):
 		"""
@@ -32,20 +33,20 @@ class Stoichify:
 		# Convert the given and wanted substances to Substance objects
 		given_substance = Substance(f"{self.balanced_dict[given_substance]}{given_substance}")
 		wanted_substance = Substance(f"{self.balanced_dict[wanted_substance]}{wanted_substance}")
+		self.work_shown.append((f"{given_amount} {given_measurement} {given_substance.calculation_presentation()} ×"))
   
 		current_measurement = given_measurement
 		significant_figures = [] # Keep track of the significant figures throughout the calculations
 		significant_figures.append(given_significant_figures) # The given is important, as it's the starting point 
 
 		if isinstance(given_amount, str): # If you have a scientific number (e.g. 4.2 x 10^2)
-			if "x" or "*" in given_amount:
+			if "x" in given_amount or "*" in given_amount:
 				given_amount = given_amount.replace("x", "*").replace(" ", "")
 				given_amount = given_amount.split("*")
 				given_amount = float(f"{given_amount[0]}e{given_amount[1].split('^')[1]}")
-			else:
-				if "e" in given_amount: # If you have a scientific number (e.g. 4.2e2)
-					given_amount = float(given_amount)
-
+			else: # If you have a scientific number (e.g. 4.2e2) or a regular number
+				given_amount = float(given_amount)
+     
 		if current_measurement != "mol": # If not in moles, convert to moles.
 			given_amount, conversion_significant_figures = given_substance.measurement_converter(given_amount, given_measurement, "/")
 			current_measurement = "mol"
@@ -54,17 +55,19 @@ class Stoichify:
 		# Molar Bridge
 		wanted_coefficient = wanted_substance.substance_coefficient()
 		given_coefficient = given_substance.substance_coefficient()
+		self.work_shown.append((f"{wanted_coefficient} {current_measurement} {wanted_substance.calculation_presentation()}", f"{given_coefficient} {current_measurement} {given_substance.calculation_presentation()}"))
 		answer = given_amount * (wanted_coefficient / given_coefficient)
 		# Integers are considered to have infinite significant figures.
 		significant_figures.append(float('inf')) # wanted
 		significant_figures.append(float('inf')) # given
 
 		if wanted_measurement != "mol": # If we're not in moles, convert to the wanted measurement.
-			answer, conversion_significant_figures = wanted_substance.measurement_converter(answer, wanted_measurement, "*")
+			answer, conversion_significant_figures = wanted_substance.measurement_converter(answer, wanted_measurement, "*", self.work_shown)
 			significant_figures.append(conversion_significant_figures)
 	
 		print(f"Significant Figures: {significant_figures} (Lowest: {min(significant_figures)})\nAnswer: {answer}")
 	
 		answer = Significant_Figures().round(answer, min(significant_figures))
 
-		return f"{answer} {wanted_measurement} {wanted_substance.remove_coefficients()}"
+		self.work_shown.append((f"= {answer} {wanted_measurement} {wanted_substance.calculation_presentation()}"))
+		return f"{answer} {wanted_measurement} {wanted_substance.calculation_presentation()}", self.work_shown

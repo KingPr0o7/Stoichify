@@ -46,6 +46,7 @@ class Substance():
 	def __init__(self, substance):
 		self.substance = str(substance)
 		self.balanced_dict = {substance: self.substance_coefficient()}
+		self.work_shown = []
   
 	def __str__(self):	# String representation of the substance, used for formatting
 		return self.substance
@@ -101,6 +102,18 @@ class Substance():
 		subscript_digits = str.maketrans("₀₁₂₃₄₅₆₇₈₉", "0123456789")
 		self.substance = str(self.substance).translate(subscript_digits)
 		return self.substance
+
+	def calculation_presentation(self):
+		"""
+		Converts the substance to a more presentable form, with subscripts
+		and coefficients, to ensure the substance is properly displayed.
+  
+		:return: The substance in a presentable form.
+		"""
+		substance = Substance(self.substance)
+		substance.remove_coefficients()
+		substance.add_subscripts()
+		return substance
 
 	def element_scanner(self, output=None):
 		"""
@@ -209,7 +222,7 @@ class Substance():
 		else:
 			return makeups
 
-	def measurement_converter(self, amount, measurement, type):
+	def measurement_converter(self, amount, measurement, type, work_shown: list):
 		"""
 		Take a substance's measurement (L, r.p., g), and amount and
 		turn it into moles (mol) and save it's significant figures (after conversion) 
@@ -224,12 +237,21 @@ class Substance():
 		:return: The amount of the substance in moles, and the significant figures after conversion.
 		"""
 		significant_figures = 0
-	
+		current_substance = Substance(self.substance).calculation_presentation()
+ 
 		if measurement == "L": # Liters to moles
 			amount = amount * STP if type == "*" else amount / STP if type == "/" else amount
+			if type == "*":
+				work_shown.append((f"{STP}L {current_substance}", f"1 mol {current_substance}"))
+			elif type == "/":
+				work_shown.append((f"1 mol {current_substance}", f"{STP}L {current_substance}"))
 			significant_figures = 3
 		elif measurement == "r.p.": # Atoms / Representative Particles to moles
 			amount = amount * AVOGADRO if type == "*" else amount / AVOGADRO if type == "/" else amount
+			if type == "*":
+				work_shown.append((f"{AVOGADRO} r.p. {current_substance}", f"1 mol {current_substance}"))
+			elif type == "/":
+				work_shown.append((f"1 mol {current_substance}", f"{AVOGADRO} r.p. {current_substance}"))
 			significant_figures = 6
 		elif measurement == "g": # Grams to moles
 			elemental_makeup = self.substance_scanner()
@@ -249,6 +271,10 @@ class Substance():
 			molar_mass = round(molar_mass, significant_figures)
 			print(f"Molar Mass: {molar_mass}")
 			amount = amount * molar_mass if type == "*" else amount / molar_mass if type == "/" else amount
+			if type == "*":
+				work_shown.append((f"{molar_mass} g {current_substance}", f"1 mol {current_substance}"))
+			elif type == "/":
+				work_shown.append((f"1 mol {current_substance}", f"{molar_mass} g {current_substance}"))
 
 		return amount, significant_figures
 
@@ -269,7 +295,8 @@ class Substance():
 		:return: The amount of the wanted substance, with the amount (in the correct significant figures) and the measurement with substance (e.g. 42.8 g H2O).
 		"""
 
-		return Stoichify(self.balanced_dict).solve(given_amount, given_significant_figures, given_measurement, given_substance, wanted_measurement, wanted_substance)
+		answer, self.work_shown = Stoichify(self.balanced_dict, self.work_shown).solve(given_amount, given_significant_figures, given_measurement, given_substance, wanted_measurement, wanted_substance)
+		return answer, self.work_shown
 
 class Equation():
 	"""
@@ -301,6 +328,7 @@ class Equation():
 		self.balanced_coefficients = [] # Balanced coefficients for each substance
 		self.balanced = ""
 		self.balanced_dict = {}	
+		self.work_shown = []
 		self.balance()
 
 	def replace_arrows(self): #→⮕⇨🡒🡒⟶➜➔➝➞➨⭢🠂🠂🠊🠢🠦🠦🠮🠮🠒🠖🠚🠞🡢🡪🡲🡺
@@ -376,7 +404,13 @@ class Equation():
 		self.replace_arrows()
 		self.reactants = self.unbalanced.replace(" ", "").split("→")[0].split("+")
 		self.products = self.unbalanced.replace(" ", "").split("→")[1].split("+")
-		self.substances = self.reactants + self.products
+
+		self.substances = []
+  
+		for substance in self.reactants + self.products:
+			new_substance = Substance(substance)
+			self.substances.append(new_substance.remove_coefficients())
+  
 		self.substances_arrowed = self.reactants + ["→"] + self.products
  
 		self.detect_charges()
@@ -544,8 +578,8 @@ class Equation():
 		:param wanted_substance: The wanted substance to convert the given substance to.
 		:return: The amount of the wanted substance, with the amount (in the correct significant figures) and the measurement with substance (e.g. 42.8 g H2O).
 		"""
-
-		return Stoichify(self.balanced_dict).solve(given_amount, given_significant_figures, given_measurement, given_substance, wanted_measurement, wanted_substance)
+		answer, self.work_shown = Stoichify(self.balanced_dict, self.work_shown).solve(given_amount, given_significant_figures, given_measurement, given_substance, wanted_measurement, wanted_substance)
+		return answer, self.work_shown
 
 if __name__ == "__main__":
     # equation = Equation("Al + Cl2 → AlCl3")
@@ -560,11 +594,14 @@ if __name__ == "__main__":
 	# print(equation.balanced)
 	# print(equation.balanced_dict)
     
+    equation = Equation("C3H8 + O2 → CO2 + H2O")
+    print(equation.stoichify(2.8, 2, "mol", "C3H8", "g", "CO2"))
+    
 	# substance = Substance("OCl2")
 	# print(substance.stoichify(392.1, 4, "g", "OCl2", "r.p.", "OCl2"))
     
-    substance = Substance("F2")
-    print(substance.stoichify("9.3021 x 10^27", 5, "r.p.", "F2", "g", "F2"))
+    # substance = Substance("F2")
+    # print(substance.stoichify("9.3021 x 10^27", 5, "r.p.", "F2", "g", "F2"))
     
 	# substance = Substance("H2O")
 	# print(substance.element_scanner())
