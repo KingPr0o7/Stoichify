@@ -19,8 +19,10 @@ import unicodedata
 import re # Regular Expressions (String Checking)
 import sympy # Symbolic Mathematics (Equations)
 from sympy import Matrix, lcm # Matrix Operations, Least Common Multiple
-import math # Mathematics (Rounding)
 from chemlib import Element # Chemical Library (Molar Masses)
+
+from sig_figs import Significant_Figures 
+from stoichiometry import Stoichify
 
 #
 # Constants
@@ -43,6 +45,7 @@ class Substance():
     
 	def __init__(self, substance):
 		self.substance = str(substance)
+		self.balanced_dict = {substance: self.substance_coefficient()}
   
 	def __str__(self):	# String representation of the substance, used for formatting
 		return self.substance
@@ -208,7 +211,7 @@ class Substance():
 
 	def measurement_converter(self, amount, measurement, type):
 		"""
-		Take a substance's measurement (L, atoms / r.p., g), and amount and
+		Take a substance's measurement (L, r.p., g), and amount and
 		turn it into moles (mol) and save it's significant figures (after conversion) 
 		for stoichiometry calculations. All with predefined scientific constants,
 		like STP, Avogadro's number, and the molar masses of elements. All molar masses
@@ -216,7 +219,7 @@ class Substance():
 		(https://github.com/harirakul/chemlib/tree/master).
   
 		:param amount: The amount of the substance, you have (usually a float or integer).
-		:param measurement: The measurement of the substance (L, atoms / r.p., g).
+		:param measurement: The measurement of the substance (L, r.p., g).
 		:param type: The type of conversion (* (multiplication), / (division)).
 		:return: The amount of the substance in moles, and the significant figures after conversion.
 		"""
@@ -225,7 +228,7 @@ class Substance():
 		if measurement == "L": # Liters to moles
 			amount = amount * STP if type == "*" else amount / STP if type == "/" else amount
 			significant_figures = 3
-		elif measurement == "atoms / r.p.": # Atoms / Representative Particles to moles
+		elif measurement == "r.p.": # Atoms / Representative Particles to moles
 			amount = amount * AVOGADRO if type == "*" else amount / AVOGADRO if type == "/" else amount
 			significant_figures = 6
 		elif measurement == "g": # Grams to moles
@@ -240,7 +243,7 @@ class Substance():
 
 			print(f"Molar Masses: {molar_masses}")
 
-			significant_figures = significant_figures_counter(molar_masses, "+") # Get the significant figures of the molar masses
+			significant_figures = Significant_Figures().count(molar_masses, "+") # Get the significant figures of the molar masses
 			print(f"Significant Figures: {significant_figures} ({molar_masses})")
 
 			molar_mass = round(molar_mass, significant_figures)
@@ -248,6 +251,25 @@ class Substance():
 			amount = amount * molar_mass if type == "*" else amount / molar_mass if type == "/" else amount
 
 		return amount, significant_figures
+
+	def stoichify(self, given_amount, given_significant_figures, given_measurement, given_substance, wanted_measurement, wanted_substance):
+		"""
+		Performs the stoichiometry calculations, with all given and wanted parameters, 
+		to convert the given substance to the wanted substance. While also reporting all
+		number in the correct significant figures, to ensure the maximum precision and accuracy.
+  
+		:param given_amount: The amount of the given substance. You can input a float or integer;
+		however, if you have a scientific number (e.g. 4.2 x 10^2), you must input it as a string,
+		like "4.2 x 10^2" OR "4.2e2" so it can be converted to a float.
+		:param given_significant_figures: The significant figures of the given amount.
+		:param given_measurement: The measurement of the given substance (L, r.p., g).
+		:param given_substance: The given substance to convert to the wanted substance.
+		:param wanted_measurement: The measurement of the wanted substance (L, r.p., g).
+		:param wanted_substance: The wanted substance to convert the given substance to.
+		:return: The amount of the wanted substance, with the amount (in the correct significant figures) and the measurement with substance (e.g. 42.8 g H2O).
+		"""
+
+		return Stoichify(self.balanced_dict).solve(given_amount, given_significant_figures, given_measurement, given_substance, wanted_measurement, wanted_substance)
 
 class Equation():
 	"""
@@ -262,6 +284,9 @@ class Equation():
     """
     
 	def __init__(self, equation):
+		"""
+		:param equation: The chemical equation to be balanced.
+		"""
 		self.original = equation # User's inputted chemical equation
 		self.unbalanced = equation # Equation put through the type checking process
 		self.elements = [] # All elements (uniques) within the chemical equation
@@ -275,7 +300,7 @@ class Equation():
 		self.element_matrix = [] # Amounts of each substance on both sides of the equation
 		self.balanced_coefficients = [] # Balanced coefficients for each substance
 		self.balanced = ""
-
+		self.balanced_dict = {}	
 		self.balance()
 
 	def replace_arrows(self): #→⮕⇨🡒🡒⟶➜➔➝➞➨⭢🠂🠂🠊🠢🠦🠦🠮🠮🠒🠖🠚🠞🡢🡪🡲🡺
@@ -500,126 +525,46 @@ class Equation():
 		self.balanced_coefficients = self.matrix_solver()
 		self.balanced = self.reconstruct(self.balanced_coefficients, include_one)
 		
-		print(self.balanced)
+		self.balanced_dict = dict(zip(self.substances, self.balanced_coefficients))
 		return self.balanced
 
 	def stoichify(self, given_amount, given_significant_figures, given_measurement, given_substance, wanted_measurement, wanted_substance):
 		"""
-		Performs stoichiometry calculations, converting the given measurement 
-		(if not in moles) to moles, then using the molar bridge to convert the
-		moles to the wanted measurement. All while considering each the significant 
-		figures (weather that be in addition, subtraction, division or multiplication),
-		throughout the calculations, to ensure the provided maximum precision and accuracy.
+		Performs the stoichiometry calculations, with all given and wanted parameters, 
+		to convert the given substance to the wanted substance. While also reporting all
+		number in the correct significant figures, to ensure the maximum precision and accuracy.
   
-		:param given_amount: The amount of the given substance (usually a float or integer).
+		:param given_amount: The amount of the given substance. You can input a float or integer;
+		however, if you have a scientific number (e.g. 4.2 x 10^2), you must input it as a string,
+		like "4.2 x 10^2" OR "4.2e2" so it can be converted to a float.
 		:param given_significant_figures: The significant figures of the given amount.
-		:param given_measurement: The measurement of the given substance (L, atoms / r.p., g).
+		:param given_measurement: The measurement of the given substance (L, r.p., g).
 		:param given_substance: The given substance to convert to the wanted substance.
-		:param wanted_measurement: The measurement of the wanted substance (L, atoms / r.p., g).
+		:param wanted_measurement: The measurement of the wanted substance (L, r.p., g).
 		:param wanted_substance: The wanted substance to convert the given substance to.
 		:return: The amount of the wanted substance, with the amount (in the correct significant figures) and the measurement with substance (e.g. 42.8 g H2O).
 		"""
-  
-		answer = 0
-		# Convert the given and wanted substances to Substance objects
-		given_substance = Substance(given_substance)
-		wanted_substance = Substance(wanted_substance)
-  
-		current_measurement = given_measurement
-		significant_figures = [] # Keep track of the significant figures throughout the calculations
-		significant_figures.append(given_significant_figures) # The given is important, as it's the starting point 
 
-		if current_measurement != "mol": # If not in moles, convert to moles.
-			given_amount, conversion_significant_figures = given_substance.measurement_converter(given_amount, given_measurement, "/")
-			current_measurement = "mol"
-			significant_figures.append(conversion_significant_figures)
-	
-		# Molar Bridge
-		wanted_coefficient = wanted_substance.substance_coefficient()
-		given_coefficient = given_substance.substance_coefficient()
-		answer = given_amount * (wanted_coefficient / given_coefficient)
-		# Integers are considered to have infinite significant figures.
-		significant_figures.append(float('inf')) # wanted
-		significant_figures.append(float('inf')) # given
-
-		if wanted_measurement != "mol": # If we're not in moles, convert to the wanted measurement.
-			answer, conversion_significant_figures = wanted_substance.measurement_converter(answer, wanted_measurement, "*")
-			significant_figures.append(conversion_significant_figures)
-	
-		print(f"Significant Figures: {significant_figures} (Lowest: {min(significant_figures)})\nAnswer: {answer}")
-	
-		answer = significant_figure_rounder(answer, min(significant_figures))
-
-		return f"{answer} {wanted_measurement} {wanted_substance.remove_coefficients()}"
-
-def significant_figures_counter(figures: list, mode):
-	"""
-	Count the significant figures of a number, or a list of numbers.
-	Mode can be either +, -, *, or / to determine the significant figures 
-	of the number(s) based on the operation. 
- 
-	With addition and subtraction, the number with the least decimal places,
-	where multiplication and division, the number with the least significant figures.
-
-	Keep in mind, trailing zeros (e.g. "42.0000") are truncated, as they're not considered significant
-	(in Python). You need to find a way to keep track of user input through key presses, and build an
-	array into a string to keep track of unaccounted for significant figures (as tkinter does).
- 
-	:param figures: The number or list () of numbers to count the significant figures of.
-	:param mode: The mode of the calculation (+, -, *, /).
-	:return: The significant figures of the number(s) (int) and the number(s) (float or int
-	"""
- 
-	significant_figures = [] # Keep track of the significant figures of each number
-	if isinstance(figures[0], str): # If you somehow have your number (including trailing zeros) as a string
-		if mode == "*" or mode == "/":
-			if "." in figures[0]:
-				figure = figures[0].replace(".", "")
-				zeros_removed = figure.lstrip("0") # Strip leading zeros
-			else:
-				zeros_removed = figures[0].lstrip("0").rstrip("0")
-			significant_figures = len(zeros_removed)
-			return significant_figures, figures[0] # Return the significant figures of that number and the number itself
-	else: # Regular calculation (assuming trailing zeros are truncated)
-		for figure in figures:
-			if "." in str(figure):
-				if mode == "+" or mode == "-":
-					significant_figures.append(len(str(figure).split(".")[1]))
-				elif mode == "*" or mode == "/":
-					figure = str(figure).replace(".", "")
-					zeros_removed = figure.lstrip("0").rstrip("0") # Strip leading and trailing zeros
-					significant_figures.append(len(zeros_removed)) # Add the significant figures of the number to the known list
-			else:
-				if mode == "+" or mode == "-":
-					significant_figures.append(0)
-	if mode == "+" or mode == "-": 
-		significant_figures = min(significant_figures) # Find lowest decimal place
-	return significant_figures
-
-def significant_figure_rounder(target_number, sig_figs):
-	"""
-	Round a number to a certain number of significant figures, 
-	answer graciously provided by Evgeny on StackOverflow:
- 
-	https://stackoverflow.com/a/3411435/20617039 (log10)
- 
-	:param target_number: The number to round to a certain number of significant figures.
-	:param sig_figs: The number of significant figures to round the number to.
-	:return: The number rounded to the specified number significant figures.
-	"""
-	if target_number != 0:
-		result = round(target_number, -int(math.floor(math.log10(abs(target_number))) + (1 - sig_figs)))
-		if sig_figs <= math.floor(math.log10(abs(target_number))) + 1:
-			return int(result)
-		else:
-			return result
-	else:
-		return 0  # Can't take the log of 0
-
+		return Stoichify(self.balanced_dict).solve(given_amount, given_significant_figures, given_measurement, given_substance, wanted_measurement, wanted_substance)
 
 if __name__ == "__main__":
-    equation = Equation("Al + Cl2 → AlCl3")
-    print(equation.stoichify(42.8, 3, "g", "2Al", "g", "3Cl2"))
+    # equation = Equation("Al + Cl2 → AlCl3")
+    # print(equation.stoichify(42.8, 3, "g", "2Al", "g", "3Cl2"))
+    
+    # TODO: no longer require the user to input the coefficients of the substances [DONE - I thinK?]
+    # TODO: add alias for r.p. (particles) [DONE!]
+    # TODO: report answers in scientific notation (if particles) [Sure]
+    
+	# equation = Equation("K + H2O → KOH + H2")
+	# print(equation.stoichify(7.99, 3, "mol", "KOH", "r.p.", "H2O"))
+	# print(equation.balanced)
+	# print(equation.balanced_dict)
+    
+	# substance = Substance("OCl2")
+	# print(substance.stoichify(392.1, 4, "g", "OCl2", "r.p.", "OCl2"))
+    
+    substance = Substance("F2")
+    print(substance.stoichify("9.3021 x 10^27", 5, "r.p.", "F2", "g", "F2"))
     
 	# substance = Substance("H2O")
 	# print(substance.element_scanner())

@@ -8,7 +8,7 @@ A Python-powered logical system designed to solve stoichiometric equations, by b
 - [x] Balance the chemical equation
 - [x] Apply Mole Ratios
 - [-] Error Detection
-- [x] Being Modularized
+- [x] Being Modularized (Better than ever)
 - [ ] User Interface
 - [ ] Show Steps 
 - [ ] Other (Limiting Reactant, Percent (%) Yield)
