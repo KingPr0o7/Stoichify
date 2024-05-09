@@ -597,6 +597,9 @@ if __name__ == "__main__":
     equation = Equation("C3H8 + O2 → CO2 + H2O")
     print(equation.stoichify(2.8, 2, "mol", "C3H8", "g", "CO2"))
     
+    # substance = Substance("S")
+    # print(substance.stoichify(4.2, 2, "mol", "S", "g", "S"))
+    
 	# substance = Substance("OCl2")
 	# print(substance.stoichify(392.1, 4, "g", "OCl2", "r.p.", "OCl2"))
     

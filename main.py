@@ -2,11 +2,8 @@ import tkinter as tk # Framework for GUI (Probably Install?)
 from tkinter import ttk
 from tkinter import messagebox
 import tkinter.font as font
-import re
-import entities # Balancer
 from entities import Equation
 from sig_figs import Significant_Figures
-import unicodedata
 import sv_ttk # Custom theme for ttk (https://github.com/rdbende/Sun-Valley-ttk-theme - pip install sv-ttk)
 from PIL import Image, ImageTk # Pillow image library (pip install pillow)
 
@@ -17,50 +14,95 @@ class MainWindow:
 		self.window.geometry("1000x700")
 		
 		self.substances = []
+		self.content = tk.Frame(self.window)
+		self.content.pack(fill="both", expand=True)
 		# ---------------
 		sv_ttk.set_theme("dark")
 
+		self.enter_equation_stage()
+
+	def enter_equation_stage(self):
 		self.equation = tk.StringVar()
 
-		self.navbar = tk.Frame(self.window, height=100)
-		self.navbar.pack(side="top", fill="x", padx=15)
+		self.place_navbar(self.content)
+  
+		self.welcome_frame = tk.Frame(self.content)
+		self.welcome_frame.pack(padx=15, pady=15, anchor="center", fill="y", expand=True)
+
+		self.welcome = ttk.Label(self.welcome_frame, text="Welcome to Stoichify!", font=("Times New Roman", 25))
+		self.welcome.pack(pady=15, anchor="center")
+
+		self.welcome_text = ttk.Label(self.welcome_frame, text="Built by Nathan Parker, with help from my chemistry teacher (Doctor of Philosophy in Chemistry) with the goal of simplifying the process of stoichiometry for beginner chemistry students. Please view the extra page for settings and credits of all contributors.", font=("Times New Roman", 15), wraplength=800, justify='center')
+		self.welcome_text.pack(pady=15, anchor="center")
+
+		# ---
+		self.user_input = ttk.Frame(self.content, height=10)
+		self.user_input.pack(side=tk.BOTTOM, pady=15)
+
+		self.input_type_frame = ttk.Frame(self.user_input)
+		self.input_type_frame.pack(side=tk.LEFT, pady=15)
+
+		self.input_type_explainer = ttk.Label(self.input_type_frame, text="Input Type:", font=("Times New Roman", 15), width=15)
+		self.input_type_explainer.pack(anchor="w", pady=5, padx=5)
+
+		self.input_type = ttk.Combobox(self.input_type_frame, values=["Equation", "Substance Only"], width=15, state="readonly")
+		self.input_type.pack(side=tk.LEFT, padx=5)
+
+		# self.equation_input_frame = ttk.Frame(self.user_input)
+		# self.equation_input_frame.pack(side=tk.LEFT, pady=15)
+
+		# self.equation_input_explainer = ttk.Label(self.equation_input_frame, text="Equation (Unbalanced or Balanced):", font=("Times New Roman", 15))
+		# self.equation_input_explainer.pack(side=tk.TOP, pady=5)
+
+		# self.equation_and_submit_frame = ttk.Frame(self.equation_input_frame)
+		# self.equation_and_submit_frame.pack(side=tk.TOP)
+
+		# self.equation_input = ttk.Entry(self.equation_and_submit_frame, textvariable=self.equation, width=75)
+		# self.equation_input.pack(side=tk.LEFT, padx=5)
+
+		self.submit = ttk.Button(self.input_type_frame, text="Submit", command=lambda: self.balance_equation(self.equation.get()))
+		self.submit.config(style="Accent.TButton")
+		self.submit.pack(side=tk.LEFT, padx=5)
+
+	def reset(self):
+		for child in self.content.winfo_children():
+			child.destroy()
+		self.enter_equation_stage()
+
+	def place_navbar(self, frame):
+		self.navbar = tk.Frame(frame, height=100)
+		self.navbar.pack(side=tk.TOP, fill="x", padx=15)
 
 		lines = tk.Frame(self.navbar, height=1, width=500)
 		lines.pack(side=tk.BOTTOM, fill="x", expand=True)
 		
-		line1 = tk.Frame(lines, height=1, width=425, bg="white")
+		line1 = tk.Frame(lines, height=1,bg="white")
 		line1.pack(side=tk.LEFT, fill="x", expand=True)
 		
-		self.exit = tk.Button(lines, text="Exit", command=self.window.quit, highlightthickness = 0, bd = 0, bg="red", fg="white", height=1, font=("Times New Roman", 13), width=10)
-		self.exit.pack(side="left", padx=5)
+		self.exit = tk.Button(lines, text="Exit", command=self.content.quit, highlightthickness = 0, bd = 0, bg="red", fg="white", height=1, font=("Times New Roman", 13), width=10)
+		self.exit.pack(side=tk.LEFT, padx=5)
+
+		self.restart = tk.Button(lines, text="Restart", command=self.reset, highlightthickness = 0, bd = 0, bg="orange", fg="white", height=1, font=("Times New Roman", 13), width=10)
+		self.restart.pack(side=tk.LEFT, padx=5)
 		
-		line2 = tk.Frame(lines, height=1, width=425, bg="white")
+		line2 = tk.Frame(lines, height=1, bg="white")
 		line2.pack(side=tk.RIGHT, fill="x", expand=True)
 
-		self.iconPath = 'images/stoichify_logo.png'
-		self.icon = ImageTk.PhotoImage(Image.open(self.iconPath).resize((200, 81)))
-		self.icon_size = tk.Label(self.navbar)
-		self.icon_size.image = self.icon  # <== this is were we anchor the img object
-		self.icon_size.configure(image=self.icon)
-		self.icon_size.pack(side=tk.LEFT)
+		self.logoPath = 'images/stoichify_logo.png'
+		self.logo = ImageTk.PhotoImage(Image.open(self.logoPath).resize((200, 81)))
+		self.logo_size = tk.Label(self.navbar)
+		self.logo_size.image = self.logo  # <== this is were we anchor the img object
+		self.logo_size.configure(image=self.logo)
+		self.logo_size.pack(side=tk.LEFT)
 
-		self.settings_path = 'images/settings.png'
-		self.settings = ImageTk.PhotoImage(Image.open(self.settings_path).resize((32, 32)))
-		self.settings_size = tk.Button(self.navbar,command=lambda: messagebox.showinfo("Settings", "Settings are not available yet."), highlightthickness = 0, bd = 0)
-		self.settings_size.image = self.settings  # <== this is were we anchor the img object
-		self.settings_size.configure(image=self.settings)
-		self.settings_size.pack(side=tk.RIGHT)
+		self.extra_path = 'images/extra.png'
+		self.extra = ImageTk.PhotoImage(Image.open(self.extra_path).resize((32, 32)))
+		self.extra_size = tk.Button(self.navbar,command=lambda: messagebox.showinfo("Extra Page", "Extra options are not available yet."), highlightthickness = 0, bd = 0)
+		self.extra_size.image = self.extra  # <== this is were we anchor the img object
+		self.extra_size.configure(image=self.extra)
+		self.extra_size.pack(side=tk.RIGHT)
 
-		# ---
-		self.user_input = ttk.Frame(self.window, height=10)
-		self.user_input.pack(side="bottom", pady=15)
-
-		self.equation_input = ttk.Entry(self.user_input, textvariable=self.equation, width=75)
-		self.equation_input.pack(side="left", padx=15, fill="y")
-
-		self.submit = ttk.Button(self.user_input, text="Submit", command=lambda: self.balance_equation(self.equation.get()))
-		self.submit.config(style="Accent.TButton")
-		self.submit.pack(side="right", fill="y")
+		return self.navbar
 
 	def create_fraction(self, frame, numerator_text, denominator_text): 
 		fraction_holder = tk.Frame(frame)
@@ -83,36 +125,36 @@ class MainWindow:
 		"""
 		self.equation = Equation(equation)
 
-		showing_chemical_equation = tk.Label(self.window, text=self.equation.balanced, font=("Times New Roman", 20))
+		showing_chemical_equation = tk.Label(self.content, text=self.equation.balanced, font=("Times New Roman", 20))
 		showing_chemical_equation.pack()
 
-		self.work_shown_wrapper = tk.Frame(self.window, width=500)
+		self.work_shown_wrapper = ttk.Frame(self.content, width=500, style="Accent.TFrame")
 		self.work_shown_wrapper.pack(pady=15, anchor="center")
 
 		self.equation_input.destroy()
 		self.given_amount = ttk.Entry(self.user_input, width=25)
-		self.given_amount.pack(side="left", fill="y")
+		self.given_amount.pack(side=tk.LEFT, fill="y")
   
 		self.given_measurement = ttk.Combobox(self.user_input, values=["g", "mol", "L", "r.p."], width=15, state="readonly")
-		self.given_measurement.pack(side="left", padx=5, fill="y")
+		self.given_measurement.pack(side=tk.LEFT, padx=5, fill="y")
   
 		self.sentence_break_of = ttk.Label(self.user_input, text="of", font=("Times New Roman", 20))
-		self.sentence_break_of.pack(side="left", fill="y")
+		self.sentence_break_of.pack(side=tk.LEFT, fill="y")
   
 		self.given_substance = ttk.Combobox(self.user_input, values=self.equation.substances, width=15, state="readonly")
-		self.given_substance.pack(side="left", padx=5, fill="y")
+		self.given_substance.pack(side=tk.LEFT, padx=5, fill="y")
 
 		self.sentence_break_to = ttk.Label(self.user_input, text="to", font=("Times New Roman", 20))
-		self.sentence_break_to.pack(side="left", fill="y")
+		self.sentence_break_to.pack(side=tk.LEFT, fill="y")
   
 		self.wanted_measurement = ttk.Combobox(self.user_input, values=["g", "mol", "L", "r.p."], width=15, state="readonly")
-		self.wanted_measurement.pack(side="left", padx=5, fill="y")
+		self.wanted_measurement.pack(side=tk.LEFT, padx=5, fill="y")
   
 		self.sentence_break_of_duplicate = ttk.Label(self.user_input, text="of", font=("Times New Roman", 20))
-		self.sentence_break_of_duplicate.pack(side="left", fill="y")
+		self.sentence_break_of_duplicate.pack(side=tk.LEFT, fill="y")
   
 		self.wanted_substance = ttk.Combobox(self.user_input, values=self.equation.substances, width=15, state="readonly")
-		self.wanted_substance.pack(side="left", padx=5, fill="y")
+		self.wanted_substance.pack(side=tk.LEFT, padx=5, fill="y")
   
 		self.submit.config(command=lambda: self.stoichiometry_inputs_checker())
   
