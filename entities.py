@@ -21,7 +21,7 @@ import sympy # Symbolic Mathematics (Equations)
 from sympy import Matrix, lcm # Matrix Operations, Least Common Multiple
 from chemlib import Element # Chemical Library (Molar Masses)
 
-from sig_figs import Significant_Figures 
+from precision import Significant_Figures 
 from stoichiometry import Stoichify
 
 #
@@ -31,7 +31,7 @@ from stoichiometry import Stoichify
 
 DEBUG_MODE = False # Toggle to True to see the properties of the chemical equation 
 STP = 22.4 # Standard Temperature and Pressure (L/mol)
-AVOGADRO = 6.02214 * 10**23 # Avogadro's number (particles/mol)]
+AVOGADRO = 6.02e23 # Avogadro's number (particles/mol)]
 UPPERCASE = "^[A-Z]$"
 LOWERCASE = "^[a-z]$"
 
@@ -242,10 +242,8 @@ class Substance():
 		:param type: The type of conversion (* (multiplication), / (division)).
 		:return: The amount of the substance in moles, and the significant figures after conversion.
 		"""
-		from stoichiometry import scientific_translator
+		from precision import Scientific_Handler
   
-  
-		significant_figures = 0
 		current_substance = Substance(self.substance).calculation_presentation()
  
 		if measurement == "L": # Liters to moles
@@ -255,13 +253,11 @@ class Substance():
 			elif type == "/":
 				work_shown = f"1 mol {current_substance}", f"{STP}L {current_substance}"
 		elif measurement == "r.p.": # Atoms / Representative Particles to moles
-			amount = amount * AVOGADRO if type == "*" else amount / AVOGADRO if type == "/" else amount
-			avogadro_str = scientific_translator(float(AVOGADRO))
-   
+			amount = amount * AVOGADRO if type == "*" else amount / AVOGADRO if type == "/" else amount 
 			if type == "*":
-				work_shown.append((f"{avogadro_str} r.p. {current_substance}", f"1 mol {current_substance}"))
+				work_shown.append((f"{Scientific_Handler(float(AVOGADRO)).to_scientific()} r.p. {current_substance}", f"1 mol {current_substance}"))
 			elif type == "/":
-				work_shown.append((f"1 mol {current_substance}", f"{avogadro_str} r.p. {current_substance}"))
+				work_shown.append((f"1 mol {current_substance}", f"{Scientific_Handler(float(AVOGADRO)).to_scientific()} r.p. {current_substance}"))
 		elif measurement == "g": # Grams to moles
 			elemental_makeup = self.substance_scanner()
 			molar_masses = []
@@ -272,6 +268,7 @@ class Substance():
 				molar_masses.append(atomic_mass)
 				molar_mass += atomic_mass * element[1][1]
 
+			print(f"Amount: {amount}")
 			print(f"Molar Mass: {molar_mass} g/mol")
 			amount = amount * molar_mass if type == "*" else amount / molar_mass if type == "/" else amount
 			if type == "*":
@@ -279,7 +276,7 @@ class Substance():
 			elif type == "/":
 				work_shown.append((f"1 mol {current_substance}", f"{molar_mass}g {current_substance}"))
 
-		return amount, significant_figures
+		return amount
 
 	def stoichify(self, given_amount, given_significant_figures, given_measurement, given_substance, wanted_measurement, wanted_substance):
 		"""
@@ -603,7 +600,19 @@ if __name__ == "__main__":
 	# equation = Equation("C3H8 + O2 → CO2 + H2O")
 	# print(equation.stoichify(2.8, 2, "mol", "C3H8", "g", "CO2"))
 	
-	print(Significant_Figures().parser("9.3021 x 10^27")[0])
+	# print(Significant_Figures().parser("9.3021 x 10^27")[1])
+	# print(Significant_Figures().parser("9.3021e27")[1])
+	# print(Significant_Figures().parser("9.3021 * 10^+27")[1])
+	# print(Significant_Figures().parser("9.3021 * 10^-27")[1])
+	# from stoichiometry import scientific_handler
+	# print(scientific_handler("2.716 x 10^24"))
+	# print(scientific_handler(float(AVOGADRO)))
+ 
+	# substance = Substance("F2")
+	# print(substance.stoichify("9.3021 x 10^27", 5, "r.p.", "F2", "g", "F2"))
+ 
+	substance = Substance("NH4Cl")
+	print(substance.stoichify("3.902 x 10^28", 4, "r.p.", "NH4Cl", "g", "NH4Cl"))
  
 	# equation = Substance("F2")
 	# print(equation.stoichify("9.3021 x 10^27", 5, "r.p.", "F2", "g", "F2"))
@@ -611,6 +620,8 @@ if __name__ == "__main__":
 	# substance = Substance("S")
 	# print(substance.stoichify(4.2, 2, "mol", "S", "g", "S"))
 	
+	# print(Significant_Figures().round(15446.502406121414, 5))
+ 
 	# substance = Substance("OCl2")
 	# print(substance.stoichify(392.1, 4, "g", "OCl2", "r.p.", "OCl2"))
 	

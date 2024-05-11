@@ -9,6 +9,6 @@ A Python-powered logical system designed to solve stoichiometric equations, by b
 - [x] Apply Mole Ratios
 - [-] Error Detection
 - [x] Being Modularized (Better than ever)
-- [ ] User Interface
-- [ ] Show Steps 
+- [x] User Interface
+- [x] Show Steps 
 - [ ] Other (Limiting Reactant, Percent (%) Yield)

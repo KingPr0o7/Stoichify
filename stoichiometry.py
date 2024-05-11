@@ -1,3 +1,5 @@
+import re
+
 class Stoichify:
 	"""
 	Handles all the stoichiometry calculations, converting the given measurement 
@@ -28,62 +30,47 @@ class Stoichify:
 		"""
   
 		from entities import Substance, Significant_Figures
+		from precision import Scientific_Handler
+  
+		given_amount = Scientific_Handler(given_amount).to_float()
   
 		answer = 0
 		# Convert the given and wanted substances to Substance objects
 		given_substance = Substance(f"{self.balanced_dict[given_substance]}{given_substance}")
 		wanted_substance = Substance(f"{self.balanced_dict[wanted_substance]}{wanted_substance}")
-		given_amount = Significant_Figures().parser(given_amount)[1] # Convert the given amount to a float or integer
-		given_amount_str = scientific_translator(given_amount) # Convert the given amount to a scientific number (e.g. 4.2 x 10^2)
-		self.work_shown.append((f"{given_amount_str} {given_measurement} {given_substance.calculation_presentation()} ×"))
+		print(f"Given Amount: {given_amount}")
+		print(type(given_amount))
+		self.work_shown.append((f"{Scientific_Handler(float(given_amount)).to_scientific()} {given_measurement} {given_substance.calculation_presentation()} ×"))
   
 		current_measurement = given_measurement
-		significant_figures = [] # Keep track of the significant figures throughout the calculations
-		significant_figures.append(given_significant_figures) # The given is important, as it's the starting point 
      
 		if current_measurement != "mol": # If not in moles, convert to moles.
-			given_amount, conversion_significant_figures = given_substance.measurement_converter(given_amount, given_measurement, "/", self.work_shown)
+			given_amount = given_substance.measurement_converter(given_amount, given_measurement, "/", self.work_shown)
 			current_measurement = "mol"
-			significant_figures.append(conversion_significant_figures)
 	
 		# Molar Bridge
 		wanted_coefficient = wanted_substance.substance_coefficient()
 		given_coefficient = given_substance.substance_coefficient()
-		if wanted_coefficient != 1 and given_coefficient != 1:
+		print(wanted_coefficient, given_coefficient)
+		if wanted_coefficient + given_coefficient != 2:
 			self.work_shown.append((f"{wanted_coefficient} {current_measurement} {wanted_substance.calculation_presentation()}", f"{given_coefficient} {current_measurement} {given_substance.calculation_presentation()}"))
+			print(f"Given Amount: {given_amount}")
 			answer = given_amount * (wanted_coefficient / given_coefficient)
-			# Integers are considered to have infinite significant figures.
-			significant_figures.append(float('inf')) # wanted
-			significant_figures.append(float('inf')) # given
 		else:
 			answer = given_amount
 
 		if wanted_measurement != "mol": # If we're not in moles, convert to the wanted measurement.
-			answer, conversion_significant_figures = wanted_substance.measurement_converter(answer, wanted_measurement, "*", self.work_shown)
-			significant_figures.append(conversion_significant_figures)
+			answer = wanted_substance.measurement_converter(answer, wanted_measurement, "*", self.work_shown)
 	
-		significant_figures = [i for i in significant_figures if i != 0] # Remove any unfounded significant figures (rounding to 0 = 0)
-		print(f"Significant Figures: {significant_figures} (Lowest: {min(significant_figures)})\nAnswer: {answer}")
-	
-		answer = Significant_Figures().round(answer, min(significant_figures))
+		print(f"Answer: {answer}")
+		answer = round(answer, given_significant_figures)
+		print(f"Given Significant Figures: {given_significant_figures}")
+		answer = Significant_Figures().round(answer, given_significant_figures)
+		answer = Scientific_Handler(answer).to_float()
+		print(f"Rounded Answer: {answer}")
 
 		if wanted_measurement == "g":
-			self.work_shown.append((f"= {answer}{wanted_measurement} {wanted_substance.calculation_presentation()}"))
+			self.work_shown.append((f"= {Scientific_Handler(answer).to_scientific()}{wanted_measurement} {wanted_substance.calculation_presentation()}"))
 		else:
-			self.work_shown.append((f"= {answer} {wanted_measurement} {wanted_substance.calculation_presentation()}"))
-		return f"{answer} {wanted_measurement} {wanted_substance.calculation_presentation()}", self.work_shown
-
-def scientific_translator(figure):
-	"""
-	Takes the float of a scientific number and converts it to a 
-	string representation of the scientific number.
-
-	:param figure: The float of the scientific number.
-	"""
-
-	figure = str(figure)
-	figure = figure.split("e")
-	superscript_digits = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
-	superscript_minus = str.maketrans("-", "⁻")
-	figure[1] = figure[1].translate(superscript_digits).translate(superscript_minus).replace("+", "")
-	return f"{figure[0]} × 10{figure[1]}"
+			self.work_shown.append((f"= {Scientific_Handler(answer).to_scientific()} {wanted_measurement} {wanted_substance.calculation_presentation()}"))
+		return f"{Scientific_Handler(answer).to_scientific()} {wanted_measurement} {wanted_substance.calculation_presentation()}", self.work_shown

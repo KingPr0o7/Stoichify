@@ -3,7 +3,7 @@ from tkinter import ttk
 from tkinter import messagebox
 import tkinter.font as font
 from entities import Equation, Substance
-from sig_figs import Significant_Figures
+from precision import Significant_Figures
 import sv_ttk # Custom theme for ttk (https://github.com/rdbende/Sun-Valley-ttk-theme - pip install sv-ttk)
 from PIL import Image, ImageTk # Pillow image library (pip install pillow)
 
@@ -250,7 +250,8 @@ class MainWindow:
 		Checks if the user inputted valid values for stoichiometry calculations.
 		"""
 		given_amount = self.given_amount.get()
-		given_significant_figures = Significant_Figures().parser(given_amount)[0]
+		given_significant_figures = Significant_Figures().parser(given_amount)
+		print(f'Given Significant Figures: {given_significant_figures}')
 		given_measurement = self.given_measurement.get()
 		given_substance = self.given_substance.get()
 		wanted_measurement = self.wanted_measurement.get()
