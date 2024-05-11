@@ -1,4 +1,5 @@
 import math # Mathematics (Rounding)
+import re # Regular Expressions (Pattern Matching)
 
 class Significant_Figures:
 	def __init__(self):
@@ -8,49 +9,39 @@ class Significant_Figures:
 		"""
 		pass
 
-	def count(self, figures: list, mode):
+	def parser(self, figure):
 		"""
-		Count the significant figures of a number, or a list of numbers.
-		Mode can be either +, -, *, or / to determine the significant figures 
-		of the number(s) based on the operation. 
-	
-		With addition and subtraction, the number with the least decimal places,
-		where multiplication and division, the number with the least significant figures.
+		Parse the given number to count the significant figures of the number(s) and
+		calculate into a float or integer.
 
-		Keep in mind, trailing zeros (e.g. "42.0000") are truncated, as they're not considered significant
+		Keep in mind, trailing zeros (e.g. float(42.0000)) are truncated, as they're not considered significant
 		(in Python). You need to find a way to keep track of user input through key presses, and build an
-		array into a string to keep track of unaccounted for significant figures (as tkinter does).
+		array representation or a string just to keep track of unaccounted for significant figures (as tkinter does).
 	
 		:param figures: The number or list () of numbers to count the significant figures of.
-		:param mode: The mode of the calculation (+, -, *, /).
-		:return: The significant figures of the number(s) (int) and the number(s) (float or int
+		:return: The significant figures of the number(s) (int) and the number(s) (float or int).
 		"""
 
 		significant_figures = [] # Keep track of the significant figures of each number
-		if isinstance(figures[0], str): # If you somehow have your number (including trailing zeros) as a string
-			if mode == "*" or mode == "/":
-				if "." in figures[0]:
-					figure = figures[0].replace(".", "")
-					zeros_removed = figure.lstrip("0") # Strip leading zeros
-				else:
-					zeros_removed = figures[0].lstrip("0").rstrip("0")
-				significant_figures = len(zeros_removed)
-				return significant_figures, figures[0] # Return the significant figures of that number and the number itself
-		else: # Regular calculation (assuming trailing zeros are truncated)
-			for figure in figures:
-				if "." in str(figure):
-					if mode == "+" or mode == "-":
-						significant_figures.append(len(str(figure).split(".")[1]))
-					elif mode == "*" or mode == "/":
-						figure = str(figure).replace(".", "")
-						zeros_removed = figure.lstrip("0").rstrip("0") # Strip leading and trailing zeros
-						significant_figures.append(len(zeros_removed)) # Add the significant figures of the number to the known list
-				else:
-					if mode == "+" or mode == "-":
-						significant_figures.append(0)
-		if mode == "+" or mode == "-": 
-			significant_figures = min(significant_figures) # Find lowest decimal place
-		return significant_figures
+		calculated_figure = 0 # Float or integer of the number
+		if not isinstance(figure, str):
+			figure = str(figure)
+
+		# Remove all spaces and replace 'x' with '*'
+		figure = figure.replace(" ", "").replace("x", "*")
+
+		# Check if the figure is in scientific notation
+		match = re.match(r"(\d*\.?\d*)(e|\*10\^)(\d+)", figure)
+
+		if match:
+			significant_figures = len(match.group(1).replace(".", "").lstrip("0").rstrip("0"))
+			calculated_figure = float(f"{match.group(1)}e{match.group(3)}")
+		else:
+			# If not in scientific notation, just count the significant figures
+			significant_figures = len(figure.replace(".", "").lstrip("0"))
+			calculated_figure = float(figure)
+
+		return significant_figures, calculated_figure
 
 	def round(self, target_number, sig_figs):
 		"""

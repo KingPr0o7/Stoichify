@@ -141,133 +141,170 @@ class MainWindow:
 		Balances the chemical equation using the Stoichify algorithm.
 		"""
 
-		self.banner_frame.destroy()
-		self.last_phrase = ""
-  
-		if type == "equation":
-			self.string = Equation(string)
-			self.last_phrase = "Below is your balanced chemical equation, in which the coefficients will be used for the molar ratios:"
-		elif type == "substance":
-			self.string = Substance(string)
-			self.last_phrase = "Below is your substance:"
-
-		self.text_banner(self.content, "Doing the Stoichiometry", f"With a now fully balanced equation, you can start the stoichiometry process. For the given amount, you can enter an integer, float, or a number in scientific notation (Ex: “4.2 x 10^24” OR “4.2e24”). {self.last_phrase}")
-
-		if type == "equation":
-			showing_chemical_equation = tk.Label(self.content, text=self.string.balanced, font=("Times New Roman", 20))
-			showing_chemical_equation.pack()
-
-		elif type == "substance":
-			showing_substance = tk.Label(self.content, text=self.string.calculation_presentation(), font=("Times New Roman", 20))
-			showing_substance.pack()
-
-		self.work_shown_wrapper = ttk.Frame(self.content, width=500, style="Accent.TFrame")
-		self.work_shown_wrapper.pack(pady=15, anchor="center")
-
-		self.input_frame.destroy()
-		
-		self.input_frame = tk.Frame(self.window)
-		self.input_frame.pack(side=tk.BOTTOM, pady=15, anchor="center")
-
-		# Given amount
-		frame_given_amount = tk.Frame(self.input_frame)
-		frame_given_amount.pack(side=tk.TOP, fill=tk.X)
-		self.given_amount_explainer = ttk.Label(frame_given_amount, text="Given Amount?", font=("Times New Roman", 15), width=25)
-		self.given_amount_explainer.pack(side=tk.LEFT)
-		self.given_amount = ttk.Entry(frame_given_amount, width=20)
-		self.given_amount.pack(side=tk.LEFT, padx=5)
-		
-		# Given measurement
-		frame_given_measurement = tk.Frame(self.input_frame)
-		frame_given_measurement.pack(side=tk.TOP, fill=tk.X)
-		self.given_measurement_explainer = ttk.Label(frame_given_measurement, text="Given Measurement Unit?", font=("Times New Roman", 15), width=25)
-		self.given_measurement_explainer.pack(side=tk.LEFT)
-		self.given_measurement = ttk.Combobox(frame_given_measurement, values=["g", "mol", "L", "r.p."], width=15, state="readonly")
-		self.given_measurement.pack(side=tk.LEFT, padx=5)
-		
-		# Given substance
-		if type == "equation":
-			frame_given_substance = tk.Frame(self.input_frame)
-			frame_given_substance.pack(side=tk.TOP, fill=tk.X)
-			self.given_substance_explainer = ttk.Label(frame_given_substance, text="Given Substance?", font=("Times New Roman", 15), width=25)
-			self.given_substance_explainer.pack(side=tk.LEFT)
-			self.given_substance = ttk.Combobox(frame_given_substance, values=self.string.substances, width=15, state="readonly")
-			self.given_substance.pack(side=tk.LEFT, padx=5)
-
-		elif type == "substance":
-			frame_given_substance = tk.Frame(self.input_frame)
-			frame_given_substance.pack(side=tk.TOP, fill=tk.X)
-			self.given_substance_explainer = ttk.Label(frame_given_substance, text="Given Substance?", font=("Times New Roman", 15), width=25)
-			self.given_substance_explainer.pack(side=tk.LEFT)
-			self.given_substance = ttk.Combobox(frame_given_substance, values=[self.string.substance], width=15, state="readonly")
-			self.given_substance.current(0)
-			self.given_substance.pack(side=tk.LEFT, padx=5)
+		try:
+			if type == "equation":
+				self.string = Equation(string)
+			elif type == "substance":
+				self.string = Substance(string)
+		except Exception as e:
+			error_string = str(e)
+			if ":" in error_string:
+				error_string = error_string.split(":")
+				return messagebox.showerror(error_string[0], error_string[1])
+			else:
+				return messagebox.showerror("Error Occurred - UNKNOWN", e)
+		else:
+			self.banner_frame.destroy()
+			self.last_phrase = ""
 	
-		# Wanted measurement
-		frame_wanted_measurement = tk.Frame(self.input_frame)
-		frame_wanted_measurement.pack(side=tk.TOP, fill=tk.X)
-		self.wanted_measurement_explainer = ttk.Label(frame_wanted_measurement, text="Wanted Measurement Unit?", font=("Times New Roman", 15), width=25)
-		self.wanted_measurement_explainer.pack(side=tk.LEFT)
-		self.wanted_measurement = ttk.Combobox(frame_wanted_measurement, values=["g", "mol", "L", "r.p."], width=15, state="readonly")
-		self.wanted_measurement.pack(side=tk.LEFT, padx=5)
-		
-		# Wanted substance
-		if type == "equation":
-			frame_wanted_substance = tk.Frame(self.input_frame)
-			frame_wanted_substance.pack(side=tk.TOP, fill=tk.X)
-			self.wanted_substance_explainer = ttk.Label(frame_wanted_substance, text="Wanted Substance?", font=("Times New Roman", 15), width=25)
-			self.wanted_substance_explainer.pack(side=tk.LEFT)
-			self.wanted_substance = ttk.Combobox(frame_wanted_substance, values=self.string.substances, width=15, state="readonly")
-			self.wanted_substance.pack(side=tk.LEFT, padx=5)
-  
-		elif type == "substance":
-			frame_wanted_substance = tk.Frame(self.input_frame)
-			frame_wanted_substance.pack(side=tk.TOP, fill=tk.X)
-			self.wanted_substance_explainer = ttk.Label(frame_wanted_substance, text="Wanted Substance?", font=("Times New Roman", 15), width=25)
-			self.wanted_substance_explainer.pack(side=tk.LEFT)
-			self.wanted_substance = ttk.Combobox(frame_wanted_substance, values=[self.string.substance], width=15, state="readonly")
-			self.wanted_substance.current(0)
-			self.wanted_substance.pack(side=tk.LEFT, padx=5)
+			# Fix this needs to come first
+			if type == "equation":
+				self.string = Equation(string)
+				self.last_phrase = "Below is your balanced chemical equation, in which the coefficients will be used for the molar ratios:"
+			elif type == "substance":
+				self.string = Substance(string)
+				self.last_phrase = "Below is your substance:"
 
-		self.submit = ttk.Button(self.input_frame, text="Stoichify!", style="Accent.TButton")
-		self.submit.pack(side=tk.BOTTOM, pady=15, fill=tk.X)
+			self.text_banner(self.content, "Doing the Stoichiometry", f"With a now fully balanced equation, you can start the stoichiometry process. For the given amount, you can enter an integer, float, or a number in scientific notation (Ex: “4.2 x 10^24” OR “4.2e24”). {self.last_phrase}")
+
+			if type == "equation":
+				self.showing_chemical_equation = tk.Label(self.content, text=self.string.balanced, font=("Times New Roman", 20))
+				self.showing_chemical_equation.pack()
+
+			elif type == "substance":
+				self.showing_substance = tk.Label(self.content, text=self.string.calculation_presentation(), font=("Times New Roman", 20))
+				self.showing_substance.pack()
+
+			self.input_frame.destroy()
+
+			self.input_frame = tk.Frame(self.window)
+			self.input_frame.pack(side=tk.BOTTOM, pady=15, anchor="center")
+
+			# Given amount
+			frame_given_amount = tk.Frame(self.input_frame)
+			frame_given_amount.pack(side=tk.TOP, fill=tk.X)
+			self.given_amount_explainer = ttk.Label(frame_given_amount, text="Given Amount?", font=("Times New Roman", 15), width=25)
+			self.given_amount_explainer.pack(side=tk.LEFT)
+			self.given_amount = ttk.Entry(frame_given_amount, width=20)
+			self.given_amount.pack(side=tk.LEFT, padx=5)
+
+			# Given measurement
+			frame_given_measurement = tk.Frame(self.input_frame)
+			frame_given_measurement.pack(side=tk.TOP, fill=tk.X)
+			self.given_measurement_explainer = ttk.Label(frame_given_measurement, text="Given Measurement Unit?", font=("Times New Roman", 15), width=25)
+			self.given_measurement_explainer.pack(side=tk.LEFT)
+			self.given_measurement = ttk.Combobox(frame_given_measurement, values=["g", "mol", "L", "r.p."], width=15, state="readonly")
+			self.given_measurement.pack(side=tk.LEFT, padx=5)
+
+			# Given substance
+			if type == "equation":
+				frame_given_substance = tk.Frame(self.input_frame)
+				frame_given_substance.pack(side=tk.TOP, fill=tk.X)
+				self.given_substance_explainer = ttk.Label(frame_given_substance, text="Given Substance?", font=("Times New Roman", 15), width=25)
+				self.given_substance_explainer.pack(side=tk.LEFT)
+				self.given_substance = ttk.Combobox(frame_given_substance, values=self.string.substances, width=15, state="readonly")
+				self.given_substance.pack(side=tk.LEFT, padx=5)
+
+			elif type == "substance":
+				frame_given_substance = tk.Frame(self.input_frame)
+				frame_given_substance.pack(side=tk.TOP, fill=tk.X)
+				self.given_substance_explainer = ttk.Label(frame_given_substance, text="Given Substance?", font=("Times New Roman", 15), width=25)
+				self.given_substance_explainer.pack(side=tk.LEFT)
+				self.given_substance = ttk.Combobox(frame_given_substance, values=[self.string.substance], width=15, state="readonly")
+				self.given_substance.current(0)
+				self.given_substance.pack(side=tk.LEFT, padx=5)
+
+			# Wanted measurement
+			frame_wanted_measurement = tk.Frame(self.input_frame)
+			frame_wanted_measurement.pack(side=tk.TOP, fill=tk.X)
+			self.wanted_measurement_explainer = ttk.Label(frame_wanted_measurement, text="Wanted Measurement Unit?", font=("Times New Roman", 15), width=25)
+			self.wanted_measurement_explainer.pack(side=tk.LEFT)
+			self.wanted_measurement = ttk.Combobox(frame_wanted_measurement, values=["g", "mol", "L", "r.p."], width=15, state="readonly")
+			self.wanted_measurement.pack(side=tk.LEFT, padx=5)
+
+			# Wanted substance
+			if type == "equation":
+				frame_wanted_substance = tk.Frame(self.input_frame)
+				frame_wanted_substance.pack(side=tk.TOP, fill=tk.X)
+				self.wanted_substance_explainer = ttk.Label(frame_wanted_substance, text="Wanted Substance?", font=("Times New Roman", 15), width=25)
+				self.wanted_substance_explainer.pack(side=tk.LEFT)
+				self.wanted_substance = ttk.Combobox(frame_wanted_substance, values=self.string.substances, width=15, state="readonly")
+				self.wanted_substance.pack(side=tk.LEFT, padx=5)
+	
+			elif type == "substance":
+				frame_wanted_substance = tk.Frame(self.input_frame)
+				frame_wanted_substance.pack(side=tk.TOP, fill=tk.X)
+				self.wanted_substance_explainer = ttk.Label(frame_wanted_substance, text="Wanted Substance?", font=("Times New Roman", 15), width=25)
+				self.wanted_substance_explainer.pack(side=tk.LEFT)
+				self.wanted_substance = ttk.Combobox(frame_wanted_substance, values=[self.string.substance], width=15, state="readonly")
+				self.wanted_substance.current(0)
+				self.wanted_substance.pack(side=tk.LEFT, padx=5)
+
+			self.submit = ttk.Button(self.input_frame, text="Stoichify!", style="Accent.TButton", command=lambda: self.stoichiometry_inputs_checker(type))
+			self.submit.pack(side=tk.BOTTOM, pady=15, fill=tk.X)
   
 		# self.submit.config(command=lambda: self.stoichiometry_inputs_checker())
   
-	# def stoichiometry_inputs_checker(self):
-	# 	"""
-	# 	Checks if the user inputted valid values for stoichiometry calculations.
-	# 	"""
-	# 	given_amount = self.given_amount.get()
-	# 	given_significant_figures = Significant_Figures().count([given_amount, 0], "*")[0]
-	# 	given_measurement = self.given_measurement.get()
-	# 	given_substance = self.given_substance.get()
-	# 	wanted_measurement = self.wanted_measurement.get()
-	# 	wanted_substance = self.wanted_substance.get()
+	def stoichiometry_inputs_checker(self, type):
+		"""
+		Checks if the user inputted valid values for stoichiometry calculations.
+		"""
+		given_amount = self.given_amount.get()
+		given_significant_figures = Significant_Figures().parser(given_amount)[0]
+		given_measurement = self.given_measurement.get()
+		given_substance = self.given_substance.get()
+		wanted_measurement = self.wanted_measurement.get()
+		wanted_substance = self.wanted_substance.get()
   
-	# 	if given_measurement not in ["g", "mol", "L", "atoms / r.p."]:
-	# 		return messagebox.showerror("Given Measurement Check [4]", "The given measurement is not a valid measurement. Please select a valid measurement.")
+		if given_measurement not in ["g", "mol", "L", "r.p."]:
+			return messagebox.showerror("Given Measurement Left Blank", "The given measurement was left blank. Please select a valid measurement.")
   
-	# 	if given_substance not in self.string.substances:
-	# 		return messagebox.showerror("Given Substance Check [5]", "The given substance is not a valid substance. Please select a valid substance.")
+		if type == "equation" and given_substance not in self.string.substances:
+			return messagebox.showerror("Given Substance Left Blank", "The given substance was left blank. Please select a valid substance.")
   
-	# 	if wanted_measurement not in ["g", "mol", "L", "atoms / r.p."]:
-	# 		return messagebox.showerror("Wanted Measurement Check [6]", "The wanted measurement is not a valid measurement. Please select a valid measurement.")
+		if wanted_measurement not in ["g", "mol", "L", "r.p."]:
+			return messagebox.showerror("Wanted Measurement Left Blank", "The wanted measurement is was left blank. Please select a valid measurement.")
   
-	# 	if wanted_substance not in self.string.substances:
-	# 		return messagebox.showerror("Wanted Substance Check [7]", "The wanted substance is not a valid substance. Please select a valid substance.")
+		if type == "equation" and wanted_substance not in self.string.substances:
+			return messagebox.showerror("Wanted Substance Left Blank", "The wanted substance is was left blank. Please select a valid substance.")
   
-	# 	self.string.stoichify(given_amount, given_significant_figures, given_measurement, given_substance, wanted_measurement, wanted_substance)
+		self.string.stoichify(given_amount, given_significant_figures, given_measurement, given_substance, wanted_measurement, wanted_substance)
 
-	# 	for index, fraction in enumerate(self.string.work_shown):
-	# 		if isinstance(fraction, str):
-	# 			label = tk.Label(self.work_shown_wrapper, text=fraction, font=("Times New Roman", 20))
-	# 			label.pack(side=tk.LEFT, padx=5)
-	# 		elif isinstance(fraction, tuple):
-	# 			self.create_fraction(self.work_shown_wrapper, fraction[0], fraction[1])
-	# 			if index+1 < len(self.string.work_shown) and isinstance(self.string.work_shown[index+1], tuple):
-	# 				label = tk.Label(self.work_shown_wrapper, text="×", font=("Times New Roman", 20))
-	# 				label.pack(side=tk.LEFT, padx=5) 
+		self.banner_frame.destroy()
+		if type == "equation":
+			self.showing_chemical_equation.destroy()
+		elif type == "substance":
+			self.showing_substance.destroy()
+		self.input_frame.destroy()
+
+		if type == "equation":
+			self.phrase = "balanced chemical equation"
+		elif type == "substance":
+			self.phrase = "substance"
+
+		self.text_banner(self.content, "Stoichiometry Results", f"Below is the completed calculation! This includes the final {self.phrase}, and the conversion from the given to the wanted. All shown out like you would write on a piece of paper. If this calculation is wrong, please go to the extra page and report an issue.")
+
+		if type == "equation":
+			self.showing_chemical_equation = tk.Label(self.content, text=self.string.balanced, font=("Times New Roman", 20))
+			self.showing_chemical_equation.place(relx=0.5, rely=0.4, anchor='center')
+		
+		elif type == "substance":
+			self.showing_substance = tk.Label(self.content, text=self.string.calculation_presentation(), font=("Times New Roman", 20))
+			self.showing_substance.place(relx=0.5, rely=0.4, anchor='center')        
+		
+		self.work_shown_wrapper = ttk.Frame(self.content, width=500, style="Accent.TFrame")
+		self.work_shown_wrapper.place(relx=0.5, rely=0.5, anchor='center')
+  
+		for index, fraction in enumerate(self.string.work_shown):
+			if isinstance(fraction, str):
+				label = tk.Label(self.work_shown_wrapper, text=fraction, font=("Times New Roman", 20))
+				label.pack(side=tk.LEFT, padx=5)
+			elif isinstance(fraction, tuple):
+				self.create_fraction(self.work_shown_wrapper, fraction[0], fraction[1])
+				if index+1 < len(self.string.work_shown) and isinstance(self.string.work_shown[index+1], tuple):
+					label = tk.Label(self.work_shown_wrapper, text="×", font=("Times New Roman", 20))
+					label.pack(side=tk.LEFT, padx=5) 
+
 
 	def run(self):
 		self.window.mainloop()
