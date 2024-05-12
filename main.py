@@ -236,18 +236,25 @@ class Main_Window:
   
 		return self.input_frame
 
-	def balance(self, string, type):
+	def balance(self, string, type, bypass=False):
 		"""
 		Calls entities.py to balance and create the equation or create a substance object
 		from the user's input. Upon the call of such, errors are caught and displayed
 		via a messagebox. 
 		"""
 
+		# Remove children from the work_shown_wrapper (if it exists)
+		if hasattr(self, 'work_shown_wrapper') and self.work_shown_wrapper:
+			self.work_shown_wrapper.destroy()
+
 		try:
-			if type == "equation":
-				self.string = Equation(string)
-			elif type == "substance":
-				self.string = Substance(string)
+			if bypass == False:
+				if type == "equation":
+					self.string = Equation(string)
+				elif type == "substance":
+					self.string = Substance(string)
+			elif bypass == True:
+				self.string.work_shown = [] # Clear work_shown for the new stoichiometry calculation
 		except Exception as e:
 			error_string = str(e)
 			if ":" in error_string:
@@ -352,6 +359,18 @@ class Main_Window:
 			self.submit = ttk.Button(self.input_frame, text="Stoichify!", style="Accent.TButton", command=lambda: self.stoichify(type))
 			self.submit.pack(side=tk.BOTTOM, pady=15, fill=tk.X)
 
+	def restart_stoichiometry(self, string, type):
+		"""
+		Allows the user to renew the stoichiometry process, by clearing
+		all widgets and re-creating the entering of stoichiometry inputs.
+  
+		:param string: The string object (either an string representation equation or substance)
+		:param type: The type of input (equation or substance)
+		"""
+
+		self.restart_button = tk.Button(self.input_frame, text="Restart Stoichiometry", bg="tomato", highlightthickness = 0, bd = 0, command=lambda: self.balance(string, type, True), width=40, height=2, font=("Times New Roman", 15))
+		self.restart_button.pack(pady=15)
+
 	def create_fraction(self, frame, numerator_text, denominator_text): 
 		"""
 		A custom fraction creator to display all values/work as would be
@@ -441,18 +460,22 @@ class Main_Window:
 		elif type == "substance":
 			self.showing_substance.destroy()
 			self.phrase = "substance"
-		self.input_frame.destroy()
+
+		for child in self.input_frame.winfo_children(): # Vanish all children
+			child.destroy()
+
+		self.restart_stoichiometry(self.string, type)
 
 		# Explain to the user what the results
 		self.text_banner("Stoichiometry Results", f"Below is the completed calculation! This includes the final {self.phrase}, and the conversion from the given to the wanted. All shown out like you would write on a piece of paper. If this calculation is wrong, please go to the extra page and report an issue.")
 
 		if type == "equation":
 			self.showing_chemical_equation = tk.Label(self.content, text=self.string.balanced, font=("Times New Roman", 20))
-			self.showing_chemical_equation.place(relx=0.5, rely=0.4, anchor='center')
+			self.showing_chemical_equation.place(relx=0.5, rely=0.5, anchor='center')
 		
 		elif type == "substance":
 			self.showing_substance = tk.Label(self.content, text=self.string.calculation_presentation(), font=("Times New Roman", 20))
-			self.showing_substance.place(relx=0.5, rely=0.4, anchor='center')        
+			self.showing_substance.place(relx=0.5, rely=0.5, anchor='center')        
 
 		#
 		# Work Shown
@@ -461,7 +484,7 @@ class Main_Window:
 		#		
   
 		self.work_shown_wrapper = ttk.Frame(self.content, width=500, style="Accent.TFrame")
-		self.work_shown_wrapper.place(relx=0.5, rely=0.5, anchor='center')
+		self.work_shown_wrapper.place(relx=0.5, rely=0.7, anchor='center')
   
 		for index, fraction in enumerate(self.string.work_shown):
 			# If it's a string it's a given or answer
