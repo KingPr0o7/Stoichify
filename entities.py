@@ -1,26 +1,28 @@
 #
-# Nathan Parker | 4/11/24 | v0.3.0
-# A CLI based chemical equation balancer that can balance any chemical equation.
-# Done by collecting subscripts, coefficients, and multipliers from the string (the chemical equation),
-# and to be calculated for their amounts, and processed into a matrix to be solved by linear algebra.
+# Nathan Parker | 5/11/24 | v0.8.0
+# Regarding this module, its purpose is to instate instances of either equations or substances. 
+# With an equation, there is a lot more to consider. Like for instance, substance concatenation, 
+# yield arrows, charges, states, matrix building, etc.  But a substance instance is a lot simpler, 
+# just with a bit more accessor methods for a more defined mutators later on. Both equations and 
+# substances can have stoichiometric calculations performed, but both are extremely diverse.   
 #
-# DOCUMENTATION COMING SOON. (I need to finish the other logic/steps first.)
-# 	For the time being, please refer to line comments and header comments 
-# 	for an understanding of the code.
+# Main Libraries:
+# - unicodedata: Used to check for UNICODE characters in the equation, like arrows.
+# - re: Regular Expressions (String Checking).
+# - sympy: Symbolic Mathematics (Equations - https://www.sympy.org/en/index.html).
+# - chemlib: Chemical Library (Molar Masses - https://github.com/harirakul/chemlib/tree/master).
 #
 
-#
-# Imports
-#   Libraries or modules that are required and used
-#   in this module. View installation instructions 
-# 	to properly install these libraries.
+# Mathematical Libraries
+import sympy
+from sympy import Matrix, lcm
+from chemlib import Element 
 
+# String Handling Libraries
 import unicodedata
-import re # Regular Expressions (String Checking)
-import sympy # Symbolic Mathematics (Equations)
-from sympy import Matrix, lcm # Matrix Operations, Least Common Multiple
-from chemlib import Element # Chemical Library (Molar Masses)
+import re
 
+# Logical Libraries
 from precision import Significant_Figures 
 from stoichiometry import Stoichify
 
@@ -29,9 +31,10 @@ from stoichiometry import Stoichify
 #   Required scientific numbers used to bridge needed calculations.
 #
 
-DEBUG_MODE = False # Toggle to True to see the properties of the chemical equation 
 STP = 22.4 # Standard Temperature and Pressure (L/mol)
 AVOGADRO = 6.02e23 # Avogadro's number (particles/mol)]
+
+# RegEx Patterns
 UPPERCASE = "^[A-Z]$"
 LOWERCASE = "^[a-z]$"
 
@@ -44,9 +47,12 @@ class Substance():
 	"""
 	
 	def __init__(self, substance):
-		self.substance = str(substance)
-		self.balanced_dict = {substance: self.substance_coefficient()}
-		self.work_shown = []
+		"""	
+		:param substance: The substance to be analyzed, manipulated, and calculated.
+		"""
+		self.substance = str(substance) # Stringifed substance, to ensure it's a string
+		self.balanced_dict = {substance: self.substance_coefficient()} # Balanced dictionary of the substance
+		self.work_shown = [] # Work shown in the stoichiometry calculations
   
 	def __str__(self):	# String representation of the substance, used for formatting
 		return self.substance
@@ -60,7 +66,7 @@ class Substance():
 		:return: The coefficient of the substance.
 		"""
   
-		coefficient_match = re.match(r"(\d+)[A-Z]", self.substance)
+		coefficient_match = re.match(r"(\d+)[A-Z]", self.substance) # Match the coefficient of the substance (e.g. 2H2O, 33CO2, etc.)
 		coefficient = 1
 		if coefficient_match:
 			coefficient = int(coefficient_match.group(1))
@@ -76,7 +82,7 @@ class Substance():
 		:return: The substance without the coefficient.
  		"""
    
-		self.substance = re.sub(r'^\d+(?=[A-Z])', '', self.substance)
+		self.substance = re.sub(r'^\d+(?=[A-Z])', '', self.substance) # Similar to the coefficient method, but we remove it
 		return self.substance
   
 	def add_subscripts(self):
@@ -86,8 +92,8 @@ class Substance():
   
 		:return: The substance with subscripts, instead of integers.
 		"""
-		subscript_digits = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
-		self.substance = str(self.substance).translate(subscript_digits)
+		subscript_digits = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉") # Translate integers to subscripts
+		self.substance = str(self.substance).translate(subscript_digits) # Apply it
 		return self.substance
 
 	def replace_subscripts(self):
@@ -99,18 +105,19 @@ class Substance():
 		:return: The substance with integers, instead of subscripts.
 		"""
 		
-		subscript_digits = str.maketrans("₀₁₂₃₄₅₆₇₈₉", "0123456789")
-		self.substance = str(self.substance).translate(subscript_digits)
+		subscript_digits = str.maketrans("₀₁₂₃₄₅₆₇₈₉", "0123456789") # Translate it back
+		self.substance = str(self.substance).translate(subscript_digits) # Apply it
 		return self.substance
 
 	def calculation_presentation(self):
 		"""
 		Converts the substance to a more presentable form, with subscripts
-		and coefficients, to ensure the substance is properly displayed.
+		and without coefficients, to ensure the substance is properly displayed
+		(mostly in dropdowns and work shown in stoichiometry calculations).
   
 		:return: The substance in a presentable form.
 		"""
-		substance = Substance(self.substance)
+		substance = Substance(self.substance) # Initialize a new instance of the substance
 		substance.remove_coefficients()
 		substance.add_subscripts()
 		return substance
@@ -130,22 +137,26 @@ class Substance():
 		for index, char in enumerate(self.substance):
 			if re.match(UPPERCASE, char):
 				element = char
+				# Check to see if the character next to the element is lowercase (two-lettered element)
 				if index + 1 < len(self.substance) and re.match(LOWERCASE, self.substance[index + 1]):
 					element = f"{char}{self.substance[index + 1]}"
 
+				# Check to see if the element is valid (from the periodic table, however isn't foolproof)
 				try:
 					element_verification = Element(element) 
 				except Exception:
 					raise Exception(f"Element Verification: The element '{element}' is not found in the periodic table. Please ensure the element is spelled/capitalized correctly.")
 	
 				if output == "unique":
+					# Don't include duplicates
 					if element not in elements:
 						elements.append(element)
 				else:
 					elements.append(element)
-			elif re.match(LOWERCASE, char):
+     
+			elif re.match(LOWERCASE, char): # If the character is lowercase, we can't process without context
 				continue
-			elif str(char).isdigit():
+			elif str(char).isdigit(): # If it's not a letter, then it's not an element
 				if output == "raw":
 					elements.append("-")
 				else:
@@ -231,8 +242,7 @@ class Substance():
 	def measurement_converter(self, amount, measurement, type, work_shown: list):
 		"""
 		Take a substance's measurement (L, r.p., g), and amount and
-		turn it into moles (mol) and save it's significant figures (after conversion) 
-		for stoichiometry calculations. All with predefined scientific constants,
+		turn it into moles (mol). All with predefined scientific constants,
 		like STP, Avogadro's number, and the molar masses of elements. All molar masses
 		are provided by the chemlib library to ensure accuracy and precision in the calculations
 		(https://github.com/harirakul/chemlib/tree/master).
@@ -242,9 +252,16 @@ class Substance():
 		:param type: The type of conversion (* (multiplication), / (division)).
 		:return: The amount of the substance in moles, and the significant figures after conversion.
 		"""
-		from precision import Scientific_Handler
-  
-		current_substance = Substance(self.substance).calculation_presentation()
+
+		# Imported here to avoid circular imports
+		from precision import Scientific_Handler # Import the scientific handler to for changing numbers into scientific notation (if needed)
+		current_substance = Substance(self.substance).calculation_presentation() # Put it in a presentable form
+
+		#
+		# Calculation + Presentation
+		#   Below the code takes a measurement and amount, and based on type calculates it.
+		#   Moreover, the type also applies to the presentation of the fraction, which is 
+		#   required for each type. 
  
 		if measurement == "L": # Liters to moles
 			amount = amount * STP if type == "*" else amount / STP if type == "/" else amount
@@ -263,13 +280,12 @@ class Substance():
 			molar_masses = []
 			molar_mass = 0
 
+			# Get the molar mass of each element in the substance (also accounts for the subscript)
 			for element in elemental_makeup:
 				atomic_mass = Element(element[0]).properties['AtomicMass'] # Get the atomic mass of the element to be converted to molar mass
 				molar_masses.append(atomic_mass)
-				molar_mass += atomic_mass * element[1][1]
+				molar_mass += atomic_mass * element[1][1] * element[1][2] # Calculate the molar mass of the substance (subscript * multiplier * atomic mass)
 
-			print(f"Amount: {amount}")
-			print(f"Molar Mass: {molar_mass} g/mol")
 			amount = amount * molar_mass if type == "*" else amount / molar_mass if type == "/" else amount
 			if type == "*":
 				work_shown.append((f"{molar_mass} g {current_substance}", f"1 mol {current_substance}"))
@@ -287,6 +303,7 @@ class Substance():
 		:param given_amount: The amount of the given substance. You can input a float or integer;
 		however, if you have a scientific number (e.g. 4.2 x 10^2), you must input it as a string,
 		like "4.2 x 10^2" OR "4.2e2" so it can be converted to a float.
+
 		:param given_significant_figures: The significant figures of the given amount.
 		:param given_measurement: The measurement of the given substance (L, r.p., g).
 		:param given_substance: The given substance to convert to the wanted substance.
@@ -314,6 +331,7 @@ class Equation():
 		"""
 		:param equation: The chemical equation to be balanced.
 		"""
+
 		self.original = equation # User's inputted chemical equation
 		self.unbalanced = equation # Equation put through the type checking process
 		self.elements = [] # All elements (uniques) within the chemical equation
@@ -326,10 +344,10 @@ class Equation():
 		self.substances = [] # All substances within the chemical equation 
 		self.element_matrix = [] # Amounts of each substance on both sides of the equation
 		self.balanced_coefficients = [] # Balanced coefficients for each substance
-		self.balanced = ""
-		self.balanced_dict = {}	
-		self.work_shown = []
-		self.balance()
+		self.balanced = "" # Final balanced chemical equation in presentable form
+		self.balanced_dict = {} # Balanced dictionary for each substance
+		self.work_shown = [] # Work shown in the stoichiometry calculations (fractions and single line strings)
+		self.balance() # Automatically balance the equation upon initialization
 
 	def replace_arrows(self): #→⮕⇨🡒🡒⟶➜➔➝➞➨⭢🠂🠂🠊🠢🠦🠦🠮🠮🠒🠖🠚🠞🡢🡪🡲🡺
 		"""
@@ -338,9 +356,10 @@ class Equation():
   
 		:return: The equation with the standardized arrow representation.
 		"""
-		self.unbalanced = ''.join(['→' if 'arrow' in unicodedata.name(char).lower() else char for char in self.unbalanced])
-		self.unbalanced = self.unbalanced.replace('->', '→')
+		self.unbalanced = ''.join(['→' if 'arrow' in unicodedata.name(char).lower() else char for char in self.unbalanced]) # Match all unicodes with 'arrow' in their name
+		self.unbalanced = self.unbalanced.replace('->', '→') # Replace with the standard chemistry yield arrow
 
+		# They didn't use the standard arrow, so raise an exception
 		if '→' not in self.unbalanced:
 			raise Exception("'Yields' Arrow Check: The yields or any UNICODE arrow is not found in the equation. Please use '->' or '→' to represent the yields arrow, so the program can properly parse reactants and products.")
 		
@@ -354,13 +373,15 @@ class Equation():
   
 		:return: The equation without any charges, if found.
 		"""
+
 		negative_charges = ['-', '−']
 
 		plus_count = self.unbalanced.count('+')
-		delta = (len(self.substances) - 1) - plus_count
-		if delta > 2:
+		delta = (len(self.substances) - 1) - plus_count # Find if each substance has a plus after it
+		if delta > 2: # If the delta doesn't equal 2, then there are charges in the equation
 			raise Exception("Equation Charges Check: Your equation includes charges (Oxidation-Reduction Reactions), which are not supported by Stoichify.")
 
+		# Also check negatives
 		for substance in self.substances:
 			if any(char in substance for char in negative_charges):
 				raise Exception("Equation Charges Check: Your equation includes charges (Oxidation-Reduction Reactions), which are not supported by Stoichify.")
@@ -373,9 +394,12 @@ class Equation():
   
 		:return: Only raises exceptions if the equation is not properly concatenated or has an empty substance.
 		"""
+
+		# If forgotten, the program will reject the equation
 		if '+' not in self.unbalanced:
 			raise Exception("Substance Concatenation '+' Check: The '+' symbol is not found in the equation. Please use '+' to separate substances in the equation.")
 
+		# If there's an empty substance, also report an exception
 		for substance in self.substances:
 			if len(substance) == 0:
 				raise Exception("Substance Concatenation Length Check: There is an empty substance in the equation. Please remove the empty substance, and carefully type the equation again.")
@@ -387,9 +411,10 @@ class Equation():
   
 		:return: The equation without any substance states.
 		"""
-		substance_states = ['\([slgaq]*\)', '\([SLGAQ]*\)']
+
+		substance_states = ['\([slgaq]*\)', '\([SLGAQ]*\)'] # RegEx for substance states
 		for state in substance_states:
-			self.unbalanced = re.sub(state, "", self.unbalanced)
+			self.unbalanced = re.sub(state, "", self.unbalanced) # Replace em'
 		return self.unbalanced
 
 	def type_checker(self):
@@ -402,6 +427,7 @@ class Equation():
 		"""
 	
 		self.replace_arrows()
+		# Split the equation into its reactants and products
 		self.reactants = self.unbalanced.replace(" ", "").split("→")[0].split("+")
 		self.products = self.unbalanced.replace(" ", "").split("→")[1].split("+")
 
@@ -409,10 +435,11 @@ class Equation():
   
 		for substance in self.reactants + self.products:
 			new_substance = Substance(substance)
-			self.substances.append(new_substance.remove_coefficients())
+			self.substances.append(new_substance.remove_coefficients()) # We don't need coefficients to balance the equation
   
 		self.substances_arrowed = self.reactants + ["→"] + self.products
  
+		# Ensure format for scanners and matrix building
 		self.detect_charges()
 		self.check_concatenation()
 		self.remove_states()
@@ -427,6 +454,7 @@ class Equation():
 		:param side: The side of the chemical equation the substance is on (reactants or products).
 		:return: The elemental makeup of the substance, stored in the makeups dictionary of the side.
 		"""
+
 		elements_side = ""
 		if side == "reactants":
 			elements_side = self.reactants
@@ -436,7 +464,7 @@ class Equation():
 		for substance in elements_side:
 			substance = Substance(substance)
 			substance.remove_coefficients() # Remove the coefficients from the substance, as we assume they're 1 (because the equation is unbalanced)
-			self.makeups = substance.substance_scanner(self.makeups, side) 
+			self.makeups = substance.substance_scanner(self.makeups, side) # Calculate the elemental makeup of the substance on that side
    
 			# Get all unique elements in the equation, while we're at it
 			elements = substance.element_scanner("unique")
@@ -448,12 +476,13 @@ class Equation():
 
 	def matrix_builder(self, side):
 		"""
-		Creates a matrix of each element's amount (subscript * multiplier) in each substance of the side
-		(reactants or products (-1 to distinguish between the two)).
+		Creates a matrix (2D Array) of each element's amount (subscript * multiplier) 
+		in each substance of the side (reactants or products (-1 to distinguish between the two)).
   
 		:param side: The side of the chemical equation the substance is on (reactants or products).
 		:return: The element matrix of the side.
 		"""
+
 		for substance in self.makeups[side]: # For each substance in the side
 			matrix_row = []
 			for element in self.elements: # Get all unique elements in the equation
@@ -545,24 +574,20 @@ class Equation():
 
 		# Ensure the equation is properly formatted
 		self.type_checker()
-		print(self.unbalanced)
   
 		# Get the elemental makeup of each substance on both sides of the equation
 		self.substance_element_makeups("reactants")
 		self.substance_element_makeups("products")
-		print(self.elements)
-		print(self.makeups)
   
 		# Build the matrix of the element amounts in each substance of the reactants and products
 		self.matrix_builder("reactants")
 		self.matrix_builder("products")
-		print(self.element_matrix)
   
 		# Solve the matrix to get the balanced coefficients
 		self.balanced_coefficients = self.matrix_solver()
 		self.balanced = self.reconstruct(self.balanced_coefficients, include_one)
 		
-		self.balanced_dict = dict(zip(self.substances, self.balanced_coefficients))
+		self.balanced_dict = dict(zip(self.substances, self.balanced_coefficients)) # Balanced dictionary for each substance (used for stoichiometry calculations)
 		return self.balanced
 
 	def stoichify(self, given_amount, given_significant_figures, given_measurement, given_substance, wanted_measurement, wanted_substance):
@@ -581,6 +606,7 @@ class Equation():
 		:param wanted_substance: The wanted substance to convert the given substance to.
 		:return: The amount of the wanted substance, with the amount (in the correct significant figures) and the measurement with substance (e.g. 42.8 g H2O).
 		"""
+  
 		answer, self.work_shown = Stoichify(self.balanced_dict, self.work_shown).solve(given_amount, given_significant_figures, given_measurement, given_substance, wanted_measurement, wanted_substance)
 		return answer, self.work_shown
 
