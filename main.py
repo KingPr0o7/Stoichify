@@ -27,7 +27,7 @@ from PIL import Image, ImageTk # Pillow image library (pip install pillow)
 from entities import Equation, Substance
 from precision import Significant_Figures
 
-class MainWindow:
+class Main_Window:
 	"""
 	Initializes the main window of Stoichify, with pre-set window geometry, title, etc.
 	With methods pertaining to the GUI handling, e.g. resting, placing the navbar, stage
@@ -79,6 +79,8 @@ class MainWindow:
 		line_right = tk.Frame(lines, height=1, bg="white")
 		line_right.pack(side=tk.RIGHT, fill="x", expand=True)
 
+		# Logo (Top Left of the Navbar)
+		self.logoPath = 'images/stoichify_logo.png'
 		try:
 			self.logo = ImageTk.PhotoImage(Image.open(self.logoPath).resize((200, 81)))
 		except Exception as e:
@@ -91,12 +93,13 @@ class MainWindow:
 			self.logo_size.pack(side=tk.LEFT)
 
 		# Extra Button (Top Right of the Navbar - Opens required second window for information and settings)
+		self.extra_path = 'images/extra.png'
 		try:
 			self.extra = ImageTk.PhotoImage(Image.open(self.extra_path).resize((32, 32)))
 		except Exception as e:
-			self.extra_size = tk.Button(self.navbar, text="Extra Page", command=lambda: messagebox.showinfo("Extra Page", "Extra options are not available yet."), highlightthickness = 0, bd = 0)
+			self.extra_size = tk.Button(self.navbar, text="Extra Page", command= lambda: Extra_Page().run(), highlightthickness = 0, bd = 0)
 		else:
-			self.extra_size = tk.Button(self.navbar, command=lambda: messagebox.showinfo("Extra Page", "Extra options are not available yet."), highlightthickness = 0, bd = 0)
+			self.extra_size = tk.Button(self.navbar, command= lambda: Extra_Page().run(), highlightthickness = 0, bd = 0)
 			self.extra_size.image = self.extra  # Save the image to prevent garbage collection
 			self.extra_size.configure(image=self.extra)
 		finally:
@@ -115,7 +118,7 @@ class MainWindow:
 		"""
 
 		# Welcome Statement
-		self.text_banner("Welcome to Stoichify!", "Built by Nathan Parker, with help from my chemistry teacher (Doctor of Philosophy in Chemistry) with the goal of simplifying the process of stoichiometry for beginner chemistry students. Please view the extra page for settings and credits of all contributors.")
+		self.text_banner("Welcome to Stoichify!", "Built by Nathan Parker, with the goal of simplifying the process of stoichiometry for beginner chemistry students. Stoichify is made for turning the daunting complexity of stoichiometry, into digestible steps, with all the work shown. If you experience any issues and want to see all contributors, please view the extra page via the right most button in the navigation bar.")
 
 		self.bottom_frame = tk.Frame(self.content)
 		self.bottom_frame.pack(side=tk.BOTTOM, fill="x", anchor="center")
@@ -483,8 +486,96 @@ class MainWindow:
 
 		self.window.mainloop()
 
+class Extra_Page():
+	"""
+	The extra page of Stoichify, which is accessed via the extra button
+	in the navbar. This page contains information about the program,
+	the contributors, and other settings that the user can change.
+	"""
+ 
+	def __init__(self):
+		self.window = tk.Tk()
+		self.window.title("Stoichify")
+		self.window.geometry("500x500")
+		sv_ttk.set_theme("dark") # FIX LATER
+	
+		self.settings_frame = ttk.Frame(self.window)
+		self.settings_frame.pack()
+  
+		# GitHub Details
+		self.create_section("Need Help?")
+		self.explain = tk.Label(self.settings_frame, text="If you need help, have a question, or want to report an issue, please go to: ", wraplength=450, justify='left', font=("Times New Roman", 15))
+		self.explain.pack()
+
+		# Make a clickable button
+		self.link = ttk.Button(self.settings_frame, text="Stoichify GitHub", cursor="hand2", style="Accent.TButton")
+		self.link.pack(pady=15)
+		self.link.bind("<Button-1>", self.open_link)
+
+		# List most of the contributors
+		self.create_section("Contributors")
+		self.create_contributor(self.settings_frame, "Nathan Parker - Programmer")
+		self.create_contributor(self.settings_frame, "Dawn Paxson Sowders, Ph.D. - Quality Assurance")
+		self.create_contributor(self.settings_frame, "Chemlib - Molar Masses Provider")
+		self.create_contributor(self.settings_frame, "Mohammad-Ali Bandzar - Balancing Algorithm")
+		self.create_contributor(self.settings_frame, "Evgeny - Significant Figures Rounding")
+		self.create_contributor(self.settings_frame, "... and many others!")
+
+	def open_link(self, event):
+		"""
+		Opens a specified link into the user's
+		default web browser.
+		"""
+
+		import webbrowser
+		webbrowser.open_new("https://github.com/KingPr0o7/Stoichify")
+
+	def create_section(self, title):
+		"""
+		Creates a section in the extra page, with a title
+		and a line divider to distinguish headers.
+		"""
+
+		settings_label = tk.Label(self.settings_frame, text=title, font=("Times New Roman", 25), justify='left') 
+		settings_label.pack(anchor='w', pady=5)
+	
+		settings_line = tk.Frame(self.settings_frame, height=1, width=450, background="white")
+		settings_line.pack(side=tk.TOP, fill="x", pady=15)
+
+	def create_contributor(self, frame, name):
+		"""
+		Creates a contributor frame with the name of the contributor
+		and places it in the frame specified.
+		"""
+
+		contributor_frame = tk.Frame(frame)
+		contributor_frame.pack(anchor='w', pady=5, fill=tk.X)
+  
+		contributor_name = tk.Label(contributor_frame, text=name, font=("Times New Roman", 15))
+		contributor_name.pack(side=tk.TOP)
+
+	# Will be used for the future, to create settings for the user to change
+	# def create_setting(self, frame, title, type, options=None):
+	# 	setting_frame = tk.Frame(frame)
+	# 	setting_frame.pack()
+  
+	# 	setting_label = tk.Label(setting_frame, text=title, font=("Times New Roman", 15))
+	# 	setting_label.pack(side=tk.LEFT)
+
+	# 	if type == "entry":
+	# 		setting_input = ttk.Entry(setting_frame, width=10)
+	# 		setting_input.pack(side=tk.LEFT, padx=5)
+	# 	elif type == "dropdown":
+	# 		setting_input = ttk.Combobox(setting_frame, values=options, width=10, state="readonly")
+	# 		setting_input.pack(side=tk.LEFT, padx=5)
+
+	# 	return setting_frame
+
+	def run(self):
+		self.window.mainloop()
+
 if __name__ == "__main__":
 	# C3H8 + O2 → CO2 + H2O
 	# 0238974C3H8 + 0239874O2 → 09248357CO2 + 824937H2O
-	main_window = MainWindow()
+	main_window = Main_Window()
 	main_window.run()

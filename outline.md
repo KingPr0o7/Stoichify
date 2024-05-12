@@ -10,6 +10,7 @@ A Python-powered logical system designed to solve stoichiometric equations, by b
 - [-] Error Detection
 - [x] Being Modularized (Better than ever)
 - [x] User Interface
+- [x] Second Window
 - [x] Documentation
 - [x] Show Steps 
 - [ ] Other (Limiting Reactant, Percent (%) Yield)
