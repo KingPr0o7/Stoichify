@@ -1,5 +1,5 @@
 #
-# Nathan Parker | 5/11/24 | v0.8.0
+# Nathan Parker | 5/12/24 | v0.8.0
 # Dealing with numbers is hard … especially scientific notation 
 # and significant figures. In which this file (precision.py) handles 
 # them. With the main purpose of converting numbers already in scientific 
@@ -60,16 +60,16 @@ class Scientific_Handler():
 		"""
 
 		# Split the number on 'e'
-		if "e" not in str(self.number):
+		if "e" not in str(self.number).lower():
 			if "." in str(self.number): # If it's just a float
 				return float(self.number)
 			else:
-				if len(str(int(self.number))) > 6: # Takes big integers and converts them
-					self.number = re.sub("e\+0", "e+", f"{self.number:.3e}") 
+				if len(str(int(float(self.number)))) > 6: 
+					self.number = re.sub("e\+0", "e+", f"{float(self.number):.3e}")
 				else:
 					return "{:,}".format(int(self.number)) # If not, use commas to separate the numbers
 
-		base, exponent = str(self.number).split('e') # If it is in a shorthand scientific notation
+		base, exponent = str(self.number).lower().split('e') # If it is in a shorthand scientific notation
 
 		# Convert the exponent to superscript
 		superscript_digits = str.maketrans("0123456789-", "⁰¹²³⁴⁵⁶⁷⁸⁹⁻") # Translate the digits to superscript
@@ -89,8 +89,8 @@ class Significant_Figures:
 		significant_figures = [] # Keep track of the significant figures of each number
 		figure = Scientific_Handler(figure).to_float() # Convert the number to a float
 
-		if "e" in str(figure): # If the number is in scientific notation
-			figure = str(figure).split("e")[0] 
+		if "e" in str(figure).lower(): # If the number is in scientific notation
+			figure = str(figure).lower().split("e")[0] 
   
 		if isinstance(figure, str): # If you somehow have your number (including trailing zeros) as a string
 			if "." in figure:
@@ -103,7 +103,7 @@ class Significant_Figures:
 		else: # Regular calculation (assuming trailing zeros are truncated)
 			if "." in str(figure):
 				figure = str(figure).replace(".", "")
-				zeros_removed = figure.lstrip("0").rstrip("0") # Strip leading and trailing zeros
+				zeros_removed = figure.strip("0") # Strip leading and trailing zeros
 				significant_figures = len(zeros_removed)
 			else:
 				significant_figures = len(str(figure).lstrip("0").rstrip("0")) # Strip leading zeros
@@ -139,12 +139,17 @@ class Significant_Figures:
 		else:
 			return 0  # Can't take the log of 0
 
+#
+# Some testing done through creation
+#
+
 # print(Significant_Figures().parser(25))
 # print(Scientific_Handler(150000000).to_scientific())
 # print(Significant_Figures().parser("9.3021 x 10^27"))
 # print(Significant_Figures().parser(3.4))
 # print(Scientific_Handler(1.23e-4).to_float()) # 0.000123
 # print(Scientific_Handler(1.23e4).to_float()) # 12300.0
+# print(Scientific_Handler(1.23e4).to_scientific()) # 1.23 × 10⁴
 # print(Scientific_Handler("9.3021 x 10^27").to_float()) 
 # print(Scientific_Handler("9.3021e27").to_float())
 # print(Scientific_Handler("9.3021E27").to_float())

@@ -120,7 +120,7 @@ class Substance():
 		substance = Substance(self.substance) # Initialize a new instance of the substance
 		substance.remove_coefficients()
 		substance.add_subscripts()
-		return substance
+		return str(substance)
 
 	def element_scanner(self, output=None):
 		"""
@@ -161,6 +161,12 @@ class Substance():
 					elements.append("-")
 				else:
 					continue
+
+		if len(elements) == 0:
+			raise Exception("Element(s) Not Found: No elements were found in the substance. Please ensure the substance is spelled correctly.")
+
+		if all(element == "-" for element in element):
+			raise Exception("Element(s) Not Found: No elements were found in the substance. Please ensure the substance is spelled correctly.")
 
 		return elements
 
@@ -425,8 +431,12 @@ class Equation():
 
 		:return: The equation after passing all checks (arrow, charges, concatenation, and states).
 		"""
-	
+
+		# Ensure format for scanners and matrix building
 		self.replace_arrows()
+		self.detect_charges()
+		self.remove_states()
+  
 		# Split the equation into its reactants and products
 		self.reactants = self.unbalanced.replace(" ", "").split("→")[0].split("+")
 		self.products = self.unbalanced.replace(" ", "").split("→")[1].split("+")
@@ -436,14 +446,10 @@ class Equation():
 		for substance in self.reactants + self.products:
 			new_substance = Substance(substance)
 			self.substances.append(new_substance.remove_coefficients()) # We don't need coefficients to balance the equation
+
+		self.check_concatenation()
   
 		self.substances_arrowed = self.reactants + ["→"] + self.products
- 
-		# Ensure format for scanners and matrix building
-		self.detect_charges()
-		self.check_concatenation()
-		self.remove_states()
-  
 		return self.unbalanced
 
 	def substance_element_makeups(self, side):
@@ -610,13 +616,14 @@ class Equation():
 		answer, self.work_shown = Stoichify(self.balanced_dict, self.work_shown).solve(given_amount, given_significant_figures, given_measurement, given_substance, wanted_measurement, wanted_substance)
 		return answer, self.work_shown
 
-if __name__ == "__main__":
+
+#
+# Testing done through the creation of this module
+#
+
+#if __name__ == "__main__":
 	# equation = Equation("Al + Cl2 → AlCl3")
 	# print(equation.stoichify(42.8, 3, "g", "2Al", "g", "3Cl2"))
-	
-	# TODO: no longer require the user to input the coefficients of the substances [DONE - I thinK?]
-	# TODO: add alias for r.p. (particles) [DONE!]
-	# TODO: report answers in scientific notation (if particles) [Sure]
 	
 	# equation = Equation("K + H2O → KOH + H2")
 	# print(equation.stoichify(7.99, 3, "mol", "KOH", "r.p.", "H2O"))
@@ -636,9 +643,12 @@ if __name__ == "__main__":
  
 	# substance = Substance("F2")
 	# print(substance.stoichify("9.3021 x 10^27", 5, "r.p.", "F2", "g", "F2"))
- 
-	substance = Substance("NH4Cl")
-	print(substance.stoichify("3.902 x 10^28", 4, "r.p.", "NH4Cl", "g", "NH4Cl"))
+
+	# substance = Substance("H2O")
+	# print(substance.measurement_converter(1, "r.p.", "/", []))
+
+	# substance = Substance("NH4Cl")
+	# print(substance.stoichify("3.902 x 10^28", 4, "r.p.", "NH4Cl", "g", "NH4Cl"))
  
 	# equation = Substance("F2")
 	# print(equation.stoichify("9.3021 x 10^27", 5, "r.p.", "F2", "g", "F2"))
@@ -657,10 +667,13 @@ if __name__ == "__main__":
 	# substance = Substance("H2O")
 	# print(substance.element_scanner())
 	
+	# equation = Equation("H2O + 2 -> H2O")
+	# print(equation.balanced)
+ 
 	# substance = Substance("K4[Fe(SCN)6]")
-	# print(substance.substance_scanner())
+	# print(substance.element_scanner("raw"))
 	# equation = Equation("K4[Fe(SCN)6] + K2Cr2O7 + H2SO4 → Fe2(SO4)3 + Cr2(SO4)3 + CO2 + H2O + K2SO4 + KNO3")
-	# equation.balance()
+	# print(equation.balanced)
 	# equation = Equation("H2 + O2 → H2O")
 	# equation.balance()
 	# substance = Substance("H2O")

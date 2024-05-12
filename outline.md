@@ -13,4 +13,5 @@ A Python-powered logical system designed to solve stoichiometric equations, by b
 - [x] Second Window
 - [x] Documentation
 - [x] Show Steps 
-- [ ] Other (Limiting Reactant, Percent (%) Yield)
+- [x] Testing
+- [ ] Other (Limiting Reactant, Percent (%) Yield) [Future Feature]

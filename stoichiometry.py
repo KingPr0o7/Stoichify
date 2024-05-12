@@ -1,5 +1,5 @@
 #
-# Nathan Parker | 5/11/24 | v0.8.0
+# Nathan Parker | 5/12/24 | v0.8.0
 # In the vast complexity of stoichiometry, this module helps solve the 
 # equations for you. Once you have created the balanced chemical equation, 
 # or have your substance, you initialize the Stoichify class with your values 

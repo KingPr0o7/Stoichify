@@ -1,5 +1,5 @@
 #
-# Nathan Parker | 5/11/24 | v0.8.0
+# Nathan Parker | 5/12/24 | v0.8.0
 # Stoichify - A stoichiometry calculator for beginner chemistry students.
 # Built and designed for ease-of-use, Stoichify aims to give students via a GUI/UI
 # that is easy to digest, input, and see the work of the program. Stoichify consists
