@@ -58,9 +58,9 @@ class Stoichify:
 		given_substance = Substance(f"{self.balanced_dict[given_substance]}{given_substance}")
 		wanted_substance = Substance(f"{self.balanced_dict[wanted_substance]}{wanted_substance}")
 		if given_measurement == "g":
-			self.work_shown.append((f"{Scientific_Handler(float(given_amount)).to_scientific()}{given_measurement} {given_substance.calculation_presentation()} ×"))
+			self.work_shown.append((f"{Scientific_Handler(given_amount).to_scientific()}{given_measurement} {given_substance.calculation_presentation()} ×"))
 		else:
-			self.work_shown.append(f"{Scientific_Handler(float(given_amount)).to_scientific()} {given_measurement} {given_substance.calculation_presentation()} ×")
+			self.work_shown.append(f"{Scientific_Handler(given_amount).to_scientific()} {given_measurement} {given_substance.calculation_presentation()} ×")
   
 		current_measurement = given_measurement # Make a standard variable for the current measurement.
      

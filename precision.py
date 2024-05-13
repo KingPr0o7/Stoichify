@@ -86,12 +86,12 @@ class Significant_Figures:
 		pass
 	
 	def parser(self, figure):    
-		significant_figures = [] # Keep track of the significant figures of each number
+		significant_figures = 0 # Keep track of the significant figures of each number
 		figure = Scientific_Handler(figure).to_float() # Convert the number to a float
 
 		if "e" in str(figure).lower(): # If the number is in scientific notation
 			figure = str(figure).lower().split("e")[0] 
-  
+
 		if isinstance(figure, str): # If you somehow have your number (including trailing zeros) as a string
 			if "." in figure:
 				figure = figure.replace(".", "")
@@ -101,12 +101,12 @@ class Significant_Figures:
 			significant_figures = len(zeros_removed)
 			return significant_figures
 		else: # Regular calculation (assuming trailing zeros are truncated)
-			if "." in str(figure):
-				figure = str(figure).replace(".", "")
-				zeros_removed = figure.strip("0") # Strip leading and trailing zeros
-				significant_figures = len(zeros_removed)
+			figure_str = str(figure)
+			if "." in figure_str:
+				# If there's a decimal point, count all digits as significant
+				significant_figures = len(figure_str.replace(".", ""))
 			else:
-				significant_figures = len(str(figure).lstrip("0").rstrip("0")) # Strip leading zeros
+				significant_figures = len(figure_str.lstrip("0").rstrip("0")) # Strip leading zeros
 		return significant_figures
 
 	def round(self, target_number, sig_figs):
@@ -143,6 +143,8 @@ class Significant_Figures:
 # Some testing done through creation
 #
 
+print(type(Scientific_Handler(35).to_float()))
+# print(Significant_Figures().parser(1.0))
 # print(Significant_Figures().parser(25))
 # print(Scientific_Handler(150000000).to_scientific())
 # print(Significant_Figures().parser("9.3021 x 10^27"))

@@ -371,6 +371,17 @@ class Equation():
 		
 		return self.unbalanced
 
+	def replace_subscripts(self):
+		"""
+		Replaces all subscripts in the equation with their respective 
+		integer versions, so the equation can be properly displayed.
+
+		:return: The equation with integers, instead of subscripts.
+		"""
+
+		subscript_digits = str.maketrans("₀₁₂₃₄₅₆₇₈₉", "0123456789")
+		self.unbalanced = self.unbalanced.translate(subscript_digits)
+
 	def detect_charges(self):
 		"""
 		Finds if the user included substance charges in the equation, and rejects
@@ -434,6 +445,7 @@ class Equation():
 
 		# Ensure format for scanners and matrix building
 		self.replace_arrows()
+		self.replace_subscripts()
 		self.detect_charges()
 		self.remove_states()
   
