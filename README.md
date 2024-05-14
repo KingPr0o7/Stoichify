@@ -12,6 +12,26 @@ The initial release of Stoichify, being a Computer Science II project, being a c
 ### `v2.0.0`
 Done for a college project at Ivy Tech, where Stoichify is now a GUI application, designed for beginner chemistry students/teachers to understand the calculations, written out like someone would on a piece of paper. Using Tkinter and other libraries to compile an easily navigable GUI for all.
 
+## Capabilities
+
+📖 Parse Substances, Equations, Special Characters, Concatenation, and other string inclusions
+
+🔎 Find Elements, Subscripts, and Multipliers
+
+✅ Check for Element's Validity
+
+📐 Find Significant Figures
+
+🤝 Accept Scientific Notation(s) _(4.2e2, 4.2 x 10^27, 4.2 * 10^27, 1.2e-2, etc.)_
+
+⚖️ Balance Chemical Equations
+
+🔄️ Convert From Measurement Units (**mol**es, **L**iters, **g**rams, and **r**epresentative **p**articles)
+
+📝 Show All Work Performed
+
+🪜 Multi-stepped and Multi-pathed GUI
+
 ## Installation
 1. Download ZIP *(and unzip)*
 2. Navigate to the highest sub folder *(Stoichify-Main/Stoichify-Main (if unzipped and not altered))*
@@ -29,6 +49,8 @@ Done for a college project at Ivy Tech, where Stoichify is now a GUI application
 9. Click 'Run' or execute command `python main.py` in your terminal in the root location.
 10. Wait for the window to open, and enjoy the power of **Stoichify**.
 
+### Don't feel like doing that?
+Here! [Download the complied zip](https://github.com/KingPr0o7/Stoichify/releases/tag/v2.0.0), unzip it, find the .exe, and run!
 
 ## User Manual
 [View the PDF User Manual](./user_manual.pdf)
