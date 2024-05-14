@@ -143,7 +143,7 @@ class Significant_Figures:
 # Some testing done through creation
 #
 
-print(type(Scientific_Handler(35).to_float()))
+# print(type(Scientific_Handler(35).to_float()))
 # print(Significant_Figures().parser(1.0))
 # print(Significant_Figures().parser(25))
 # print(Scientific_Handler(150000000).to_scientific())

@@ -16,7 +16,7 @@
 #
 
 # GUI Libraries
-import tkinter as tk # Framework for GUI (Probably Install?)
+import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 import tkinter.font as font
@@ -450,7 +450,15 @@ class Main_Window:
 			return messagebox.showerror("Wanted Substance Left Blank", "The wanted substance is was left blank. Please select a valid substance.")
   
 		# Call the stoichify method from entities.py (changes based on type - equation or substance)
-		self.string.stoichify(given_amount, given_significant_figures, given_measurement, given_substance, wanted_measurement, wanted_substance)
+		try:
+			self.string.stoichify(given_amount, given_significant_figures, given_measurement, given_substance, wanted_measurement, wanted_substance)
+		except Exception as e:
+			error_string = str(e)
+			if ":" in error_string:
+				error_string = error_string.split(":")
+				return messagebox.showerror(error_string[0], error_string[1])
+			else:
+				return messagebox.showerror("Error Occurred - UNKNOWN", e)
 
 		# Destroy the banner, substance/equation, and input frame
 		self.banner_frame.destroy()

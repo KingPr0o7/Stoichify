@@ -204,7 +204,10 @@ class Substance():
 				continue
 			elif char == "(":
 				closing_parenthesis_index = str(self.substance).index(")")
-				element_multiplier = int(self.substance[closing_parenthesis_index + 1])
+				try:
+					element_multiplier = int(self.substance[closing_parenthesis_index + 1])
+				except Exception:
+					raise Exception("Element Multiplier Error: The element multiplier is not found. Most likely due to a parsing error with substance states. Make sure to close all parentheses.")
 				continue
 			elif char == ")":
 				element_multiplier = 1 # Reset the multiplier
@@ -348,6 +351,7 @@ class Equation():
 			"products": {}, 
 		}
 		self.substances = [] # All substances within the chemical equation 
+		self.substance_states = {} # All states of the substances in the equation (if provided)
 		self.element_matrix = [] # Amounts of each substance on both sides of the equation
 		self.balanced_coefficients = [] # Balanced coefficients for each substance
 		self.balanced = "" # Final balanced chemical equation in presentable form
@@ -421,18 +425,23 @@ class Equation():
 			if len(substance) == 0:
 				raise Exception("Substance Concatenation Length Check: There is an empty substance in the equation. Please remove the empty substance, and carefully type the equation again.")
 
-	def remove_states(self):
+	def remove_state(self, substance):
 		"""
-		Removes all substance states in the equation, such as (s), (l), (g), and (aq).
+		Removes a substance's states in the equation, such as (s), (l), (g), and (aq).
 		As the Stoichify does not need to know the state of the substance to balance the equation.
+		However, it's not deleted, and is shown back to the user if they include it in the equation.
   
-		:return: The equation without any substance states.
+		:return: The substance without its state.
 		"""
-
-		substance_states = ['\([slgaq]*\)', '\([SLGAQ]*\)'] # RegEx for substance states
-		for state in substance_states:
-			self.unbalanced = re.sub(state, "", self.unbalanced) # Replace em'
-		return self.unbalanced
+		
+		substance_states = '(?i)\([slgaq]*\)' # Case-insensitive RegEx for substance states
+		found_state = re.search(substance_states, substance) # Find the state of the substance
+		
+		if found_state: # If found, add it to the dictionary
+			substance = re.sub(substance_states, "", substance) # Replace it
+			self.substance_states[substance] = found_state.group().lower()
+		
+		return substance
 
 	def type_checker(self):
 		"""
@@ -447,17 +456,19 @@ class Equation():
 		self.replace_arrows()
 		self.replace_subscripts()
 		self.detect_charges()
-		self.remove_states()
   
-		# Split the equation into its reactants and products
-		self.reactants = self.unbalanced.replace(" ", "").split("→")[0].split("+")
-		self.products = self.unbalanced.replace(" ", "").split("→")[1].split("+")
-
+		# 
+		self.reactants = []
+		self.products = []
 		self.substances = []
   
-		for substance in self.reactants + self.products:
-			new_substance = Substance(substance)
-			self.substances.append(new_substance.remove_coefficients()) # We don't need coefficients to balance the equation
+		sides = [(self.reactants, 0), (self.products, 1)]
+		for side, index in sides:
+			for substance in str(self.unbalanced.replace(" ", "").split("→")[index]).split("+"):
+				substance = self.remove_state(substance)
+				side.append(substance)
+				new_substance = Substance(substance)	
+				self.substances.append(new_substance.remove_coefficients()) # We don't need coefficients to balance the equation
 
 		self.check_concatenation()
   
@@ -556,14 +567,14 @@ class Equation():
 		for index, substance in enumerate(self.substances_arrowed):
 			if substance != "→":
 				# Reconstruct via Substance instances
-				substance = Substance(substance)
-				substance.remove_coefficients()
-				substance.add_subscripts()
-	
+
+				formatted_substance = Substance(substance).calculation_presentation()	
+				formatted_substance += self.substance_states.get(substance, "") # Add the state of the substance back in
+
 				# Element basis (if they want 1s included, or not)
-				element_builder = f"{balanced_coefficients[pointer]}{substance}"
+				element_builder = f"{balanced_coefficients[pointer]}{formatted_substance}"
 				if include_one == False and balanced_coefficients[pointer] == 1:
-					element_builder = f"{substance}"
+					element_builder = f"{formatted_substance}"
 	
 				if index == len(self.substances_arrowed) - 1:
 					self.balanced += f"{element_builder}"
@@ -576,6 +587,7 @@ class Equation():
 				pointer += 1
 			else:
 				self.balanced += "→ " # Add the 'yields' arrow back in
+		print(self.balanced)
 		return self.balanced
 
 	def balance(self, include_one=True):
@@ -633,9 +645,9 @@ class Equation():
 # Testing done through the creation of this module
 #
 
-#if __name__ == "__main__":
-	# equation = Equation("Al + Cl2 → AlCl3")
-	# print(equation.stoichify(42.8, 3, "g", "2Al", "g", "3Cl2"))
+# if __name__ == "__main__":
+	# equation = Equation("Al(s) + Cl2(L) → AlCl3(s)")
+	# print(equation.stoichify(42.8, 3, "g", "Al", "g", "Cl2"))
 	
 	# equation = Equation("K + H2O → KOH + H2")
 	# print(equation.stoichify(7.99, 3, "mol", "KOH", "r.p.", "H2O"))
