@@ -169,7 +169,7 @@ class Test_Equations(unittest.TestCase):
 
 	def test_equation_type_checker_arrow_states(self):
 		equation = Equation("SO2(g) + O2(g) -> SO3(g)")
-		self.assertEqual(equation.type_checker(), "SO2 + O2 → SO3")
+		self.assertEqual(equation.type_checker(), "SO2(g) + O2(g) → SO3(g)")
 
 	def test_equation_type_checker_concat(self):
 		with self.assertRaises(Exception): # Improper concatenation

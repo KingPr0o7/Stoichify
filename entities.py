@@ -587,7 +587,6 @@ class Equation():
 				pointer += 1
 			else:
 				self.balanced += "→ " # Add the 'yields' arrow back in
-		print(self.balanced)
 		return self.balanced
 
 	def balance(self, include_one=True):
