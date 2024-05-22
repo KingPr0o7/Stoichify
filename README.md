@@ -32,6 +32,10 @@ Done for a college project at Ivy Tech, where Stoichify is now a GUI application
 
 🪜 Multi-stepped and Multi-pathed GUI
 
+## Video Explainer
+https://youtu.be/Ou4IJQcHsRI?si=cYPVNoGFn5B_fS28
+
+
 ## Installation
 1. Download ZIP *(and unzip)*
 2. Navigate to the highest sub folder *(Stoichify-Main/Stoichify-Main (if unzipped and not altered))*
