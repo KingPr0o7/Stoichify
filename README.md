@@ -71,4 +71,4 @@ Here! [Download the complied zip](https://github.com/KingPr0o7/Stoichify/release
 ## License
 Due to the nature of this project, and how capable it'll be, this project will be protected by the [`GNU Affero General Public License Version 3 (AGPL-3.0)`](./LICENSE). Intended to yield further projects to be **open source for the public**. Entities are *free to change and upload Stoichify else-where* — as long as it's instilled via [AGPL-3.0](./LICENSE). 
 
-<p align="center"><img src="images/np_logo.png?raw=true" alt="Nathan Parker's Logo"></p>
+<p align="center"><img src="images/logo.png?raw=true" alt="Nathan Parker's Logo"></p>
