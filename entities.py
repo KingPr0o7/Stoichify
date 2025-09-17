@@ -434,7 +434,7 @@ class Equation():
 		:return: The substance without its state.
 		"""
 		
-		substance_states = '(?i)\([slgaq]*\)' # Case-insensitive RegEx for substance states
+		substance_states = r'(?i)\([slgaq]*\)' # Case-insensitive RegEx for substance states
 		found_state = re.search(substance_states, substance) # Find the state of the substance
 		
 		if found_state: # If found, add it to the dictionary
